@@ -147,6 +147,12 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     setPreviewUrl(URL.createObjectURL(compressed));
   }
 
+  function clearPreview() {
+    setPreview(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl('');
+  }
+
   async function submit() {
     if (!preview) return;
     setBusy(true);
@@ -183,7 +189,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
           <img src={previewUrl} alt="Preview" className="aspect-[3/4] w-full object-cover" />
           <div className="grid grid-cols-2 gap-2 p-3">
             <Button disabled={busy} onClick={submit}><Upload size={18} /> Upload</Button>
-            <Button disabled={busy} variant="ghost" onClick={() => setPreview(null)}><RefreshCw size={18} /> Retake</Button>
+            <Button disabled={busy} variant="ghost" onClick={clearPreview}><RefreshCw size={18} /> Retake</Button>
           </div>
         </div>
       )}
