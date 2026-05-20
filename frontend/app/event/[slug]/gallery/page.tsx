@@ -66,12 +66,12 @@ export default function GalleryPage() {
     const queuedPhotos = photos.map((item, photoIndex) => ({ item, photoIndex })).filter(({ photoIndex }) => photoIndex !== index);
 
     return (
-      <main className="min-h-screen bg-ink p-4 text-cream sm:p-6">
-        <section className="mx-auto grid max-w-7xl gap-4">
-          <header className="flex flex-wrap items-center justify-between gap-3">
+      <main className="min-h-screen overflow-hidden bg-black text-cream">
+        <section className="grid min-h-screen grid-rows-[auto_1fr_auto] gap-3 p-3 sm:gap-4 sm:p-5">
+          <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cream/10 px-4 py-3 backdrop-blur ring-1 ring-cream/10">
             <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-parchment">{event?.event_type || 'Event'} TV gallery</p>
-              <h1 className="text-2xl font-black sm:text-4xl">{event?.title || 'Live gallery'}</h1>
+              <p className="text-xs font-bold uppercase tracking-widest text-parchment">MemoryShots TV</p>
+              <h1 className="text-xl font-black sm:text-3xl">{event?.title || 'Live gallery'}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" onClick={() => setAutoPlay((current) => !current)}>
@@ -85,9 +85,9 @@ export default function GalleryPage() {
             </div>
           </header>
 
-          <div className="relative min-h-[58vh] overflow-hidden rounded-3xl bg-black shadow-soft sm:min-h-[70vh]">
+          <div className="relative overflow-hidden rounded-[2rem] bg-zinc-950 shadow-[0_0_0_10px_rgba(255,248,236,0.08),0_40px_120px_rgba(0,0,0,0.7)] ring-1 ring-cream/10">
             <div
-              className="flex h-[58vh] transition-transform duration-700 ease-out sm:h-[70vh]"
+              className="flex h-[66vh] min-h-[430px] transition-transform duration-700 ease-out sm:h-[72vh]"
               style={{ transform: `translateX(-${index * 100}%)` }}
             >
               {photos.map((slide) => (
@@ -95,17 +95,18 @@ export default function GalleryPage() {
                   <img
                     src={slide.image_url}
                     alt="Carousel backdrop"
-                    className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-3xl"
                   />
                   <img
                     src={slide.image_url}
                     alt="TV carousel photo"
-                    className="relative z-10 max-h-[70vh] max-w-full object-contain"
+                    className="relative z-10 max-h-full max-w-full object-contain"
                   />
                 </div>
               ))}
             </div>
-            <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/45 p-4 backdrop-blur">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/55 p-4 backdrop-blur">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Carousel - Now showing</p>
                 <h2 className="text-xl font-black">{photo.guest_id?.name || 'Guest'}</h2>
@@ -114,14 +115,14 @@ export default function GalleryPage() {
               <p className="font-mono text-sm text-parchment">{index + 1} / {photos.length}</p>
             </div>
             <button
-              className="absolute left-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft"
+              className="absolute left-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft sm:size-14"
               onClick={previousPhoto}
               aria-label="Previous photo"
             >
               <ChevronLeft />
             </button>
             <button
-              className="absolute right-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft"
+              className="absolute right-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft sm:size-14"
               onClick={nextPhoto}
               aria-label="Next photo"
             >
@@ -137,11 +138,11 @@ export default function GalleryPage() {
               </div>
               <Button variant="ghost" onClick={nextPhoto}><ChevronRight size={16} /> Next</Button>
             </div>
-            <div className="grid max-h-[34vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {queuedPhotos.map(({ item, photoIndex }) => (
                 <button
                   key={item._id}
-                  className="grid grid-cols-[72px_1fr] gap-3 rounded-2xl bg-cream/10 p-2 text-left ring-1 ring-cream/10 transition hover:bg-cream/20"
+                  className="grid min-w-[260px] grid-cols-[72px_1fr] gap-3 rounded-2xl bg-cream/10 p-2 text-left ring-1 ring-cream/10 transition hover:bg-cream/20"
                   onClick={() => setIndex(photoIndex)}
                 >
                   <img src={item.image_url} alt="Queued gallery thumbnail" className="aspect-square w-full rounded-xl object-cover" />
