@@ -63,9 +63,11 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [busy, setBusy] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [filterId, setFilterId] = useState<FilterId>('clean');
   const selectedFilter = getFilter(filterId);
 
@@ -94,6 +96,32 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [stream, previewUrl]);
+
+  useEffect(() => {
+    if (!sourceFile) return;
+
+    let cancelled = false;
+    setProcessing(true);
+    processImageFile(sourceFile, filterId)
+      .then((filteredFile) => {
+        if (cancelled) return;
+        setPreview(filteredFile);
+        setPreviewUrl((currentUrl) => {
+          if (currentUrl) URL.revokeObjectURL(currentUrl);
+          return URL.createObjectURL(filteredFile);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Unable to apply this filter');
+      })
+      .finally(() => {
+        if (!cancelled) setProcessing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filterId, sourceFile]);
 
   async function openCamera() {
     try {
@@ -131,23 +159,16 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     canvas.height = Math.round(video.videoHeight * ratio);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.filter = selectedFilter.css;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('Capture failed'))), 'image/jpeg', 0.88);
     });
-    setPreviewFile(new File([blob], `memoryshot-${Date.now()}.jpg`, { type: 'image/jpeg' }), false);
+    setSourceFile(new File([blob], `memoryshot-${Date.now()}.jpg`, { type: 'image/jpeg' }));
     closeCamera();
   }
 
-  async function setPreviewFile(file: File, applyFilter = true) {
-    const compressed = applyFilter ? await processImageFile(file, filterId) : file;
-    setPreview(compressed);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(compressed));
-  }
-
   function clearPreview() {
+    setSourceFile(null);
     setPreview(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
@@ -188,8 +209,8 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
         <div className="overflow-hidden rounded-2xl bg-cream shadow-soft">
           <img src={previewUrl} alt="Preview" className="aspect-[3/4] w-full object-cover" />
           <div className="grid grid-cols-2 gap-2 p-3">
-            <Button disabled={busy} onClick={submit}><Upload size={18} /> Upload</Button>
-            <Button disabled={busy} variant="ghost" onClick={clearPreview}><RefreshCw size={18} /> Retake</Button>
+            <Button disabled={busy || processing} onClick={submit}><Upload size={18} /> {processing ? 'Filtering' : 'Upload'}</Button>
+            <Button disabled={busy || processing} variant="ghost" onClick={clearPreview}><RefreshCw size={18} /> Retake</Button>
           </div>
         </div>
       )}
@@ -226,7 +247,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
         accept="image/jpeg,image/png,image/webp"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) setPreviewFile(file);
+          if (file) setSourceFile(file);
           event.target.value = '';
         }}
       />
