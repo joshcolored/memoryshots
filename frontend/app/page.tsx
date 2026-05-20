@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Camera, QrCode } from 'lucide-react';
+import { Camera, LogIn, UserPlus } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -15,7 +15,10 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link className="inline-flex items-center gap-2 rounded-lg bg-moss px-5 py-3 font-bold text-cream shadow-soft" href="/admin/login">
-              <QrCode size={18} /> Admin login
+              <LogIn size={18} /> Login
+            </Link>
+            <Link className="inline-flex items-center gap-2 rounded-lg bg-cream px-5 py-3 font-bold text-moss shadow-soft ring-1 ring-moss/20" href="/admin/register">
+              <UserPlus size={18} /> Create Account
             </Link>
           </div>
         </div>

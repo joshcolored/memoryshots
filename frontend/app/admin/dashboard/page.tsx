@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarPlus, Image, Users } from 'lucide-react';
+import { CalendarPlus, Image, LogOut, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { EventRecord } from '@/types';
 import { adminApi } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { clearAdminToken, getAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<EventRecord[]>([]);
 
   useEffect(() => {
@@ -37,7 +39,19 @@ export default function DashboardPage() {
             <h1 className="text-4xl font-black text-ink">Dashboard</h1>
             <p className="mt-2 text-moss">A calm command center for every celebration.</p>
           </div>
-          <Link href="/admin/events/create"><Button><CalendarPlus size={18} /> Create event</Button></Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/events/create"><Button><CalendarPlus size={18} /> Create event</Button></Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                clearAdminToken();
+                toast.success('Logged out');
+                router.push('/admin/login');
+              }}
+            >
+              <LogOut size={18} /> Logout
+            </Button>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
