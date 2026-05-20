@@ -31,6 +31,8 @@ export default function GalleryPage() {
     const socket = io(API_URL);
     socket.emit('join-event', slug);
     socket.on('photo:new', load);
+    socket.on('photo:updated', load);
+    socket.on('photo:deleted', load);
     return () => {
       socket.disconnect();
     };
@@ -42,6 +44,10 @@ export default function GalleryPage() {
     return () => clearInterval(timer);
   }, [autoPlay, slideshow, photos.length]);
 
+  useEffect(() => {
+    if (index >= photos.length) setIndex(0);
+  }, [index, photos.length]);
+
   function nextPhoto() {
     setIndex((current) => (current + 1) % photos.length);
   }
@@ -52,12 +58,26 @@ export default function GalleryPage() {
 
   if (slideshow && photos.length) {
     const photo = photos[index];
-    const nextPhotos = photos.filter((item) => item._id !== photo._id).slice(0, 6);
+    const queuedPhotos = photos.map((item, photoIndex) => ({ item, photoIndex })).filter(({ photoIndex }) => photoIndex !== index);
 
     return (
-      <main className="min-h-screen bg-ink p-4 text-cream sm:p-8">
-        <section className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-5 lg:grid-cols-[1fr_280px]">
-          <div className="relative grid min-h-[65vh] place-items-center overflow-hidden rounded-3xl bg-black shadow-soft">
+      <main className="min-h-screen bg-ink p-4 text-cream sm:p-6">
+        <section className="mx-auto grid max-w-7xl gap-4">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-parchment">{event?.event_type || 'Event'} TV gallery</p>
+              <h1 className="text-2xl font-black sm:text-4xl">{event?.title || 'Live gallery'}</h1>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" onClick={() => setAutoPlay((current) => !current)}>
+                {autoPlay ? <Pause size={16} /> : <Play size={16} />}
+                {autoPlay ? 'Pause' : 'Auto'}
+              </Button>
+              <Button onClick={() => setSlideshow(false)}><X size={16} /> Close</Button>
+            </div>
+          </header>
+
+          <div className="relative grid min-h-[58vh] place-items-center overflow-hidden rounded-3xl bg-black shadow-soft sm:min-h-[70vh]">
             <img
               src={photo.image_url}
               alt="Featured slideshow photo"
@@ -66,8 +86,16 @@ export default function GalleryPage() {
             <img
               src={photo.image_url}
               alt="Featured slideshow photo"
-              className="relative z-10 max-h-[78vh] max-w-full object-contain"
+              className="relative z-10 max-h-[70vh] max-w-full object-contain"
             />
+            <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/45 p-4 backdrop-blur">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-parchment">Now showing</p>
+                <h2 className="text-xl font-black">{photo.guest_id?.name || 'Guest'}</h2>
+                <p className="text-sm text-parchment">{new Date(photo.created_at).toLocaleString()}</p>
+              </div>
+              <p className="font-mono text-sm text-parchment">{index + 1} / {photos.length}</p>
+            </div>
             <button
               className="absolute left-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft"
               onClick={previousPhoto}
@@ -84,34 +112,27 @@ export default function GalleryPage() {
             </button>
           </div>
 
-          <aside className="grid content-between gap-4 rounded-3xl bg-cream/10 p-4 ring-1 ring-cream/15">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-parchment">{event?.event_type || 'Event'} TV gallery</p>
-              <h1 className="mt-2 text-3xl font-black">{event?.title || 'Live gallery'}</h1>
-              <p className="mt-3 text-sm text-parchment">
-                Showing {index + 1} of {photos.length} approved memories
-              </p>
+          <section className="rounded-3xl bg-cream/10 p-3 ring-1 ring-cream/15 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-parchment">Queue</h2>
+              <Button variant="ghost" onClick={nextPhoto}><ChevronRight size={16} /> Next</Button>
             </div>
-
-            <div className="grid grid-cols-3 gap-2 lg:grid-cols-2">
-              {nextPhotos.map((item) => (
-                <button key={item._id} className="overflow-hidden rounded-xl ring-1 ring-cream/15" onClick={() => setIndex(photos.findIndex((photoItem) => photoItem._id === item._id))}>
-                  <img src={item.image_url} alt="Gallery thumbnail" className="aspect-square w-full object-cover" />
+            <div className="grid max-h-[34vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+              {queuedPhotos.map(({ item, photoIndex }) => (
+                <button
+                  key={item._id}
+                  className="grid grid-cols-[72px_1fr] gap-3 rounded-2xl bg-cream/10 p-2 text-left ring-1 ring-cream/10 transition hover:bg-cream/20"
+                  onClick={() => setIndex(photoIndex)}
+                >
+                  <img src={item.image_url} alt="Queued gallery thumbnail" className="aspect-square w-full rounded-xl object-cover" />
+                  <span className="min-w-0 self-center">
+                    <span className="block truncate font-black text-cream">{item.guest_id?.name || 'Guest'}</span>
+                    <span className="mt-1 block text-xs text-parchment">{new Date(item.created_at).toLocaleString()}</span>
+                  </span>
                 </button>
               ))}
             </div>
-
-            <div className="grid gap-2">
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="ghost" onClick={() => setAutoPlay((current) => !current)}>
-                  {autoPlay ? <Pause size={16} /> : <Play size={16} />}
-                  {autoPlay ? 'Pause' : 'Auto'}
-                </Button>
-                <Button variant="ghost" onClick={nextPhoto}><ChevronRight size={16} /> Next</Button>
-              </div>
-              <Button onClick={() => setSlideshow(false)}><X size={16} /> Close TV mode</Button>
-            </div>
-          </aside>
+          </section>
         </section>
       </main>
     );

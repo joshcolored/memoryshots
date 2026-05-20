@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Download, ExternalLink, Trash2 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import type { EventRecord, Photo } from '@/types';
 import { adminApi, API_URL, APP_URL } from '@/lib/api';
@@ -39,6 +40,19 @@ export default function EventDetailPage() {
     load().catch((error) => toast.error(error.message));
   }, [guestFilter]);
 
+  useEffect(() => {
+    if (!event?.slug) return;
+    const socket = io(API_URL);
+    socket.emit('join-event', event.slug);
+    socket.on('photo:new', () => {
+      load().catch((error) => toast.error(error.message));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [event?.slug, guestFilter]);
+
   async function save(payload: EventRecord) {
     const token = getAdminToken();
     if (!token) return;
@@ -50,17 +64,32 @@ export default function EventDetailPage() {
   async function setStatus(photoId: string, status: Photo['status']) {
     const token = getAdminToken();
     if (!token) return;
+    const currentPhoto = photos.find((photo) => photo._id === photoId);
     await adminApi.setPhotoStatus(token, photoId, status);
+    setPhotos((current) => current.map((photo) => (photo._id === photoId ? { ...photo, status } : photo)));
+    if (currentPhoto?.status !== status) {
+      setStats((current) => ({
+        ...current,
+        approved_total: (current.approved_total || 0) + (status === 'approved' ? 1 : currentPhoto?.status === 'approved' ? -1 : 0),
+        pending_total: (current.pending_total || 0) + (status === 'pending' ? 1 : currentPhoto?.status === 'pending' ? -1 : 0)
+      }));
+    }
     toast.success('Photo updated');
-    await load();
   }
 
   async function removePhoto(photoId: string) {
     const token = getAdminToken();
     if (!token) return;
+    const currentPhoto = photos.find((photo) => photo._id === photoId);
     await adminApi.deletePhoto(token, photoId);
+    setPhotos((current) => current.filter((photo) => photo._id !== photoId));
+    setStats((current) => ({
+      ...current,
+      photo_total: Math.max((current.photo_total || 0) - 1, 0),
+      approved_total: Math.max((current.approved_total || 0) - (currentPhoto?.status === 'approved' ? 1 : 0), 0),
+      pending_total: Math.max((current.pending_total || 0) - (currentPhoto?.status === 'pending' ? 1 : 0), 0)
+    }));
     toast.success('Photo deleted');
-    await load();
   }
 
   if (!event) return <main className="min-h-screen px-5 py-8 text-moss">Loading event...</main>;

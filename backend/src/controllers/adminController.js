@@ -136,19 +136,37 @@ export const listPhotos = asyncHandler(async (req, res) => {
 });
 
 export const updatePhotoStatus = asyncHandler(async (req, res) => {
-  await findAdminPhoto(req, req.params.id);
+  const existingPhoto = await findAdminPhoto(req, req.params.id);
+  const event = await Event.findById(existingPhoto.event_id);
   const photo = await Photo.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true, runValidators: true });
+
+  if (event) {
+    req.app.get('io').to(`event:${event.slug}`).emit('photo:updated', {
+      event: event.slug,
+      photo_id: photo._id,
+      status: photo.status
+    });
+  }
+
   res.json({ data: photo });
 });
 
 export const deletePhoto = asyncHandler(async (req, res) => {
   const photo = await findAdminPhoto(req, req.params.id);
+  const event = await Event.findById(photo.event_id);
 
   await Promise.allSettled([
     deleteStoredPhoto(photo.storage_file_id),
     Guest.findByIdAndUpdate(photo.guest_id, { $inc: { photo_count: -1 } })
   ]);
   await photo.deleteOne();
+
+  if (event) {
+    req.app.get('io').to(`event:${event.slug}`).emit('photo:deleted', {
+      event: event.slug,
+      photo_id: photo._id
+    });
+  }
 
   res.json({ message: 'Photo deleted' });
 });
