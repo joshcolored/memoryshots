@@ -183,11 +183,11 @@ export default function GalleryPage() {
           </div>
         </div>
         {photos.length > 0 && (
-          <section className="mb-8 rounded-3xl bg-cream/80 p-3 shadow-soft sm:p-5">
+          <section className="mb-8 -mx-2 rounded-3xl bg-cream/80 p-2 shadow-soft sm:mx-0 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-moss">Live Carousel</p>
-                <h2 className="text-2xl font-black text-ink">Now showing memories</h2>
+                <h2 className="text-xl font-black text-ink sm:text-2xl">Now showing memories</h2>
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={previousPhoto}><ChevronLeft size={16} /> Prev</Button>
@@ -197,7 +197,7 @@ export default function GalleryPage() {
 
             <div className="relative overflow-hidden rounded-2xl bg-ink">
               <div
-                className="flex h-[420px] transition-transform duration-700 ease-out max-sm:h-[320px]"
+                className="flex h-[62vh] max-h-[520px] min-h-[360px] transition-transform duration-700 ease-out sm:h-[420px]"
                 style={{ transform: `translateX(-${index * 100}%)` }}
               >
                 {photos.map((slide) => (
@@ -207,21 +207,21 @@ export default function GalleryPage() {
                   </div>
                 ))}
               </div>
-              <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-end justify-between gap-2 rounded-xl bg-black/45 p-3 text-cream backdrop-blur">
+              <div className="absolute bottom-2 left-2 right-2 flex flex-wrap items-end justify-between gap-2 rounded-xl bg-black/50 p-3 text-cream backdrop-blur sm:bottom-3 sm:left-3 sm:right-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-parchment">Carousel - Now showing</p>
-                  <p className="text-lg font-black">{photos[index]?.guest_id?.name || 'Guest'}</p>
+                  <p className="text-base font-black sm:text-lg">{photos[index]?.guest_id?.name || 'Guest'}</p>
                   <p className="text-xs text-parchment">{photos[index] ? new Date(photos[index].created_at).toLocaleString() : ''}</p>
                 </div>
                 <span className="font-mono text-xs text-parchment">{index + 1} / {photos.length}</span>
               </div>
             </div>
 
-            <div className="mt-3 grid max-h-60 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:grid sm:max-h-60 sm:grid-cols-2 sm:overflow-y-auto lg:grid-cols-3">
               {photos.map((photo, photoIndex) => (
                 <button
                   key={photo._id}
-                  className={`grid grid-cols-[64px_1fr] gap-3 rounded-2xl p-2 text-left ring-1 transition ${
+                  className={`grid min-w-[245px] grid-cols-[64px_1fr] gap-3 rounded-2xl p-2 text-left ring-1 transition sm:min-w-0 ${
                     photoIndex === index ? 'bg-moss text-cream ring-moss' : 'bg-white/70 text-moss ring-moss/10'
                   }`}
                   onClick={() => setIndex(photoIndex)}
