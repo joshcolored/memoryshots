@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,12 +41,6 @@ export default function AdminLoginPage() {
         <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Field label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <Button disabled={busy}>Login</Button>
-        <p className="text-center text-sm font-semibold text-moss">
-          Need an admin account?{' '}
-          <Link className="font-black text-ink underline" href="/admin/register">
-            Create Account
-          </Link>
-        </p>
       </form>
     </main>
   );
