@@ -10,6 +10,7 @@ import type { EventRecord, Photo } from '@/types';
 import { API_URL, publicApi } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
+import { Spinner } from '@/components/ui/Spinner';
 
 export default function GalleryPage() {
   const params = useParams<{ slug: string }>();
@@ -19,6 +20,8 @@ export default function GalleryPage() {
   const [slideshow, setSlideshow] = useState(false);
   const [index, setIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
+  const [tvLoading, setTvLoading] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
   async function load() {
     const response = await publicApi.gallery(slug);
@@ -45,7 +48,7 @@ export default function GalleryPage() {
 
   useEffect(() => {
     if (!slideshow || !autoPlay || !photos.length) return;
-    const timer = setInterval(() => setIndex((current) => (current + 1) % photos.length), 5000);
+    const timer = setInterval(() => setIndex((current) => (current + 1) % photos.length), 3000);
     return () => clearInterval(timer);
   }, [autoPlay, slideshow, photos.length]);
 
@@ -59,6 +62,18 @@ export default function GalleryPage() {
 
   function previousPhoto() {
     setIndex((current) => (current - 1 + photos.length) % photos.length);
+  }
+
+  function markLoaded(photoId: string) {
+    setLoadedImages((current) => ({ ...current, [photoId]: true }));
+  }
+
+  function openTvMode() {
+    setTvLoading(true);
+    setAutoPlay(true);
+    setSlideshow(true);
+    window.history.replaceState(null, '', `/event/${slug}/gallery?tv=1`);
+    window.setTimeout(() => setTvLoading(false), 450);
   }
 
   if (slideshow && photos.length) {
@@ -92,15 +107,22 @@ export default function GalleryPage() {
             >
               {photos.map((slide) => (
                 <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
+                  {!loadedImages[slide._id] && (
+                    <div className="absolute inset-0 z-20 grid place-items-center bg-black/35 text-cream">
+                      <Spinner className="size-8" />
+                    </div>
+                  )}
                   <img
                     src={slide.image_url}
                     alt="Carousel backdrop"
                     className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-3xl"
+                    onLoad={() => markLoaded(slide._id)}
                   />
                   <img
                     src={slide.image_url}
                     alt="TV carousel photo"
                     className="relative z-10 max-h-full max-w-full object-contain"
+                    onLoad={() => markLoaded(slide._id)}
                   />
                 </div>
               ))}
@@ -174,12 +196,13 @@ export default function GalleryPage() {
               className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition ${
                 photos.length ? 'bg-moss text-cream hover:bg-ink' : 'pointer-events-none bg-moss text-cream opacity-50'
               }`}
-              onClick={() => {
-                setAutoPlay(true);
-                setSlideshow(true);
+              onClick={(event) => {
+                event.preventDefault();
+                openTvMode();
               }}
             >
-              <MonitorPlay size={16} /> TV Carousel
+              {tvLoading ? <Spinner /> : <MonitorPlay size={16} />}
+              {tvLoading ? 'Opening...' : 'TV Carousel'}
             </a>
           </div>
         </div>
@@ -203,8 +226,13 @@ export default function GalleryPage() {
               >
                 {photos.map((slide) => (
                   <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
-                    <img src={slide.image_url} alt="Carousel backdrop" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl" />
-                    <img src={slide.image_url} alt="Carousel photo" className="relative z-10 max-h-full max-w-full object-contain" />
+                    {!loadedImages[slide._id] && (
+                      <div className="absolute inset-0 z-20 grid place-items-center bg-ink/60 text-cream">
+                        <Spinner className="size-8" />
+                      </div>
+                    )}
+                    <img src={slide.image_url} alt="Carousel backdrop" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl" onLoad={() => markLoaded(slide._id)} />
+                    <img src={slide.image_url} alt="Carousel photo" className="relative z-10 max-h-full max-w-full object-contain" onLoad={() => markLoaded(slide._id)} />
                   </div>
                 ))}
               </div>

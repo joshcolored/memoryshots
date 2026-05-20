@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, RefreshCw, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
 
 type Props = {
   disabled: boolean;
@@ -67,6 +68,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   const [preview, setPreview] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [busy, setBusy] = useState(false);
+  const [openingCamera, setOpeningCamera] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [filterId, setFilterId] = useState<FilterId>('clean');
   const selectedFilter = getFilter(filterId);
@@ -124,6 +126,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   }, [filterId, sourceFile]);
 
   async function openCamera() {
+    setOpeningCamera(true);
     try {
       const media = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -136,6 +139,8 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
       setStream(media);
     } catch {
       toast.error('Camera access was blocked. You can still upload from gallery.');
+    } finally {
+      setOpeningCamera(false);
     }
   }
 
@@ -209,7 +214,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
         <div className="overflow-hidden rounded-2xl bg-cream shadow-soft">
           <img src={previewUrl} alt="Preview" className="aspect-[3/4] w-full object-cover" />
           <div className="grid grid-cols-2 gap-2 p-3">
-            <Button disabled={busy || processing} onClick={submit}><Upload size={18} /> {processing ? 'Filtering' : 'Upload'}</Button>
+            <Button disabled={busy || processing} onClick={submit}>
+              {(busy || processing) && <Spinner />}
+              {processing ? 'Filtering...' : busy ? 'Uploading...' : <><Upload size={18} /> Upload</>}
+            </Button>
             <Button disabled={busy || processing} variant="ghost" onClick={clearPreview}><RefreshCw size={18} /> Retake</Button>
           </div>
         </div>
@@ -235,7 +243,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
 
       {!stream && !preview && (
         <div className="grid grid-cols-2 gap-3">
-          <Button disabled={disabled} onClick={openCamera}><Camera size={18} /> Take photo</Button>
+          <Button disabled={disabled || openingCamera} onClick={openCamera}>
+            {openingCamera ? <Spinner /> : <Camera size={18} />}
+            {openingCamera ? 'Opening...' : 'Take photo'}
+          </Button>
           <Button disabled={disabled} variant="ghost" onClick={() => fileRef.current?.click()}><Upload size={18} /> Upload</Button>
         </div>
       )}

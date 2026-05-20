@@ -44,6 +44,8 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               onClick={() => {
+                const confirmed = window.confirm('Are you sure you want to logout?');
+                if (!confirmed) return;
                 clearAdminToken();
                 toast.success('Logged out');
                 router.push('/admin/login');
