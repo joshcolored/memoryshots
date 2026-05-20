@@ -136,7 +136,7 @@ export default function EventDetailPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <EventForm initial={event} submitLabel="Save event" onSubmit={save} />
-          <QRCodePanel slug={event.slug} />
+          <QRCodePanel slug={event.slug} title={event.title} eventType={event.event_type} eventDate={event.event_date} />
         </div>
 
         <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
