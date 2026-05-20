@@ -8,6 +8,7 @@ import { adminApi } from '@/lib/api';
 import { saveAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
+import { Spinner } from '@/components/ui/Spinner';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function AdminLoginPage() {
         </div>
         <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Field label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button disabled={busy}>Login</Button>
+        <Button disabled={busy}>{busy && <Spinner />} {busy ? 'Logging in...' : 'Login'}</Button>
       </form>
     </main>
   );

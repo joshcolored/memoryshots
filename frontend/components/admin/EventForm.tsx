@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { EventRecord, EventType } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Field, SelectField } from '@/components/ui/Field';
+import { Spinner } from '@/components/ui/Spinner';
 
 const eventTypes: EventType[] = ['Wedding', 'Christening', 'Birthday', 'Corporate', 'Anniversary', 'Custom'];
 
@@ -54,7 +55,7 @@ export function EventForm({ initial, onSubmit, submitLabel }: { initial?: Partia
           <input type="checkbox" checked={Boolean(form.watermark_enabled)} onChange={(e) => setForm({ ...form, watermark_enabled: e.target.checked })} /> Watermark
         </label>
       </div>
-      <Button disabled={busy}>{submitLabel}</Button>
+      <Button disabled={busy}>{busy && <Spinner />} {busy ? 'Saving...' : submitLabel}</Button>
     </form>
   );
 }
