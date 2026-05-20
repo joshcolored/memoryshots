@@ -39,6 +39,11 @@ export default function GalleryPage() {
   }, [slug]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSlideshow(params.get('tv') === '1');
+  }, []);
+
+  useEffect(() => {
     if (!slideshow || !autoPlay || !photos.length) return;
     const timer = setInterval(() => setIndex((current) => (current + 1) % photos.length), 5000);
     return () => clearInterval(timer);
@@ -73,7 +78,10 @@ export default function GalleryPage() {
                 {autoPlay ? <Pause size={16} /> : <Play size={16} />}
                 {autoPlay ? 'Pause' : 'Auto'}
               </Button>
-              <Button onClick={() => setSlideshow(false)}><X size={16} /> Close</Button>
+              <Button onClick={() => {
+                setSlideshow(false);
+                window.history.replaceState(null, '', `/event/${slug}/gallery`);
+              }}><X size={16} /> Close</Button>
             </div>
           </header>
 
@@ -99,7 +107,7 @@ export default function GalleryPage() {
             </div>
             <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/45 p-4 backdrop-blur">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Carousel · Now showing</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Carousel - Now showing</p>
                 <h2 className="text-xl font-black">{photo.guest_id?.name || 'Guest'}</h2>
                 <p className="text-sm text-parchment">{new Date(photo.created_at).toLocaleString()}</p>
               </div>
@@ -160,9 +168,74 @@ export default function GalleryPage() {
           </div>
           <div className="flex gap-2">
             <Link href={`/event/${slug}`}><Button variant="ghost"><Camera size={16} /> Camera</Button></Link>
-            <Button disabled={!photos.length} onClick={() => { setAutoPlay(true); setSlideshow(true); }}><MonitorPlay size={16} /> TV mode</Button>
+            <a
+              href={`/event/${slug}/gallery?tv=1`}
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition ${
+                photos.length ? 'bg-moss text-cream hover:bg-ink' : 'pointer-events-none bg-moss text-cream opacity-50'
+              }`}
+              onClick={() => {
+                setAutoPlay(true);
+                setSlideshow(true);
+              }}
+            >
+              <MonitorPlay size={16} /> TV Carousel
+            </a>
           </div>
         </div>
+        {photos.length > 0 && (
+          <section className="mb-8 rounded-3xl bg-cream/80 p-3 shadow-soft sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-moss">Live Carousel</p>
+                <h2 className="text-2xl font-black text-ink">Now showing memories</h2>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={previousPhoto}><ChevronLeft size={16} /> Prev</Button>
+                <Button onClick={nextPhoto}>Next <ChevronRight size={16} /></Button>
+              </div>
+            </div>
+
+            <div className="relative overflow-hidden rounded-2xl bg-ink">
+              <div
+                className="flex h-[420px] transition-transform duration-700 ease-out max-sm:h-[320px]"
+                style={{ transform: `translateX(-${index * 100}%)` }}
+              >
+                {photos.map((slide) => (
+                  <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
+                    <img src={slide.image_url} alt="Carousel backdrop" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl" />
+                    <img src={slide.image_url} alt="Carousel photo" className="relative z-10 max-h-full max-w-full object-contain" />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-end justify-between gap-2 rounded-xl bg-black/45 p-3 text-cream backdrop-blur">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-parchment">Carousel - Now showing</p>
+                  <p className="text-lg font-black">{photos[index]?.guest_id?.name || 'Guest'}</p>
+                  <p className="text-xs text-parchment">{photos[index] ? new Date(photos[index].created_at).toLocaleString() : ''}</p>
+                </div>
+                <span className="font-mono text-xs text-parchment">{index + 1} / {photos.length}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid max-h-60 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+              {photos.map((photo, photoIndex) => (
+                <button
+                  key={photo._id}
+                  className={`grid grid-cols-[64px_1fr] gap-3 rounded-2xl p-2 text-left ring-1 transition ${
+                    photoIndex === index ? 'bg-moss text-cream ring-moss' : 'bg-white/70 text-moss ring-moss/10'
+                  }`}
+                  onClick={() => setIndex(photoIndex)}
+                >
+                  <img src={photo.image_url} alt="Queue thumbnail" className="aspect-square w-full rounded-xl object-cover" />
+                  <span className="min-w-0 self-center">
+                    <span className="block truncate font-black">{photo.guest_id?.name || 'Guest'}</span>
+                    <span className="mt-1 block text-xs opacity-80">{new Date(photo.created_at).toLocaleString()}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <GalleryGrid photos={photos} />
       </section>
     </main>
