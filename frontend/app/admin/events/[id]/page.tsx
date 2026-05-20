@@ -88,6 +88,20 @@ export default function EventDetailPage() {
               a.click();
               URL.revokeObjectURL(url);
             }}><Download size={16} /> ZIP</Button>
+            <Button
+              variant="danger"
+              onClick={async () => {
+                const token = getAdminToken();
+                if (!token) return;
+                const confirmed = window.confirm(`Delete "${event.title}" and all of its photos, guests, and messages?`);
+                if (!confirmed) return;
+                await adminApi.deleteEvent(token, id);
+                toast.success('Event deleted');
+                router.push('/admin/dashboard');
+              }}
+            >
+              <Trash2 size={16} /> Delete Event
+            </Button>
           </div>
         </div>
 

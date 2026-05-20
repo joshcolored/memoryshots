@@ -3,29 +3,30 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/api';
 import { saveAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 
-export default function AdminLoginPage() {
+export default function AdminRegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@memoryshots.local');
-  const [password, setPassword] = useState('change-this-password');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     try {
-      const response = await adminApi.login(email, password);
+      const response = await adminApi.register(name, email, password);
       saveAdminToken(response.token);
-      toast.success('Welcome back');
+      toast.success('Account created');
       router.push('/admin/dashboard');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
+      toast.error(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setBusy(false);
     }
@@ -35,17 +36,18 @@ export default function AdminLoginPage() {
     <main className="grid min-h-screen place-items-center px-5 py-10">
       <form onSubmit={submit} className="grid w-full max-w-md gap-5 rounded-2xl bg-cream/85 p-6 shadow-soft">
         <div>
-          <div className="mb-4 inline-flex rounded-full bg-moss p-3 text-cream"><Lock /></div>
-          <h1 className="text-3xl font-black text-ink">Login</h1>
-          <p className="mt-2 text-sm text-moss">Manage events, approvals, guests, QR codes, and downloads.</p>
+          <div className="mb-4 inline-flex rounded-full bg-moss p-3 text-cream"><UserPlus /></div>
+          <h1 className="text-3xl font-black text-ink">Create Account</h1>
+          <p className="mt-2 text-sm text-moss">Your events and galleries will be connected to this admin account.</p>
         </div>
+        <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
         <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <Field label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <Button disabled={busy}>Login</Button>
+        <Field label="Password" type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Button disabled={busy}>Create Account</Button>
         <p className="text-center text-sm font-semibold text-moss">
-          Need an admin account?{' '}
-          <Link className="font-black text-ink underline" href="/admin/register">
-            Create Account
+          Already have an account?{' '}
+          <Link className="font-black text-ink underline" href="/admin/login">
+            Login
           </Link>
         </p>
       </form>

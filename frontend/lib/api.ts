@@ -39,8 +39,13 @@ export const publicApi = {
 };
 
 export const adminApi = {
+  register: (name: string, email: string, password: string) =>
+    request<{ token: string; admin: { id: string; name: string; email: string } }>('/api/admin/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password })
+    }),
   login: (email: string, password: string) =>
-    request<{ token: string; admin: { email: string } }>('/api/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    request<{ token: string; admin: { id?: string; name?: string; email: string } }>('/api/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   events: (token: string) => request<{ data: EventRecord[] }>('/api/admin/events', { token }),
   createEvent: (token: string, payload: EventRecord) =>
     request<{ data: EventRecord }>('/api/admin/events', { method: 'POST', body: JSON.stringify(payload), token }),

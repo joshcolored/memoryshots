@@ -1,6 +1,6 @@
 import express from 'express';
 import { body, param } from 'express-validator';
-import { login, logout } from '../controllers/authController.js';
+import { login, logout, register } from '../controllers/authController.js';
 import {
   createEvent,
   deleteEvent,
@@ -30,7 +30,15 @@ const eventValidation = [
   body('guestbook_enabled').optional().isBoolean()
 ];
 
-router.post('/login', body('email').isEmail(), body('password').isLength({ min: 1 }), validate, login);
+router.post(
+  '/register',
+  body('name').trim().isLength({ min: 2, max: 100 }),
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }),
+  validate,
+  register
+);
+router.post('/login', body('email').isEmail().normalizeEmail(), body('password').isLength({ min: 1 }), validate, login);
 router.post('/logout', requireAdmin, logout);
 
 router.use(requireAdmin);

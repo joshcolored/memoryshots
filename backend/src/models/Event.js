@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const eventSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
+    admin_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null, index: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     event_type: {
       type: String,

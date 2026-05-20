@@ -7,7 +7,7 @@ Full-stack QR event photo sharing app for weddings, christenings, birthdays, cor
 - `backend`: Express REST API with MongoDB, GridFS photo storage, JWT admin auth, JWT guest sessions, upload validation, admin moderation, ZIP download, guestbook messages, and Socket.IO gallery refresh events.
 - `frontend`: Next.js App Router with TypeScript, Tailwind CSS, Framer Motion, QR generation, guest camera capture, gallery uploads, public gallery, slideshow mode, and admin dashboard.
 
-The original requirements mention Laravel Sanctum for admin authentication, but this project is intentionally Express-only. The backend uses JWT auth instead, which matches the requested Node/Express API architecture.
+The original requirements mention Laravel Sanctum for admin authentication, but this project is intentionally Express-only. The backend uses JWT auth instead, which matches the requested Node/Express API architecture. Admins can create accounts at `/admin/register`; new events are connected to the logged-in admin account.
 
 ## Project Structure
 
@@ -109,7 +109,7 @@ Open `http://localhost:3000`.
 6. JWT authentication: `src/middleware/auth.js`
 7. Next.js frontend setup: `frontend/app`, Tailwind, TypeScript config
 8. Guest pages: `/event/[slug]`
-9. Admin dashboard: `/admin/login`, `/admin/dashboard`, `/admin/events`, `/admin/events/create`, `/admin/events/[id]`
+9. Admin dashboard: `/admin/register`, `/admin/login`, `/admin/dashboard`, `/admin/events`, `/admin/events/create`, `/admin/events/[id]`
 10. QR code generation: `components/admin/QRCodePanel.tsx`
 11. Camera capture: `components/guest/CameraCapture.tsx`
 12. Gallery: `/event/[slug]/gallery`, `components/gallery/GalleryGrid.tsx`
@@ -129,6 +129,7 @@ Public:
 Admin:
 
 - `POST /api/admin/login`
+- `POST /api/admin/register`
 - `POST /api/admin/logout`
 - `GET /api/admin/events`
 - `POST /api/admin/events`

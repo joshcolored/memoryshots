@@ -22,8 +22,34 @@ function eventPayload(body) {
   };
 }
 
-export const listEvents = asyncHandler(async (_req, res) => {
-  const events = await Event.find().sort({ event_date: -1 }).lean();
+function adminEventScope(req) {
+  return req.admin.admin_id ? { admin_id: req.admin.admin_id } : {};
+}
+
+async function findAdminEvent(req, eventId) {
+  const event = await Event.findOne({ _id: eventId, ...adminEventScope(req) });
+  if (!event) {
+    const error = new Error('Event not found');
+    error.status = 404;
+    throw error;
+  }
+  return event;
+}
+
+async function findAdminPhoto(req, photoId) {
+  const photo = await Photo.findById(photoId);
+  if (!photo) {
+    const error = new Error('Photo not found');
+    error.status = 404;
+    throw error;
+  }
+
+  await findAdminEvent(req, photo.event_id);
+  return photo;
+}
+
+export const listEvents = asyncHandler(async (req, res) => {
+  const events = await Event.find(adminEventScope(req)).sort({ event_date: -1 }).lean();
   const eventIds = events.map((event) => event._id);
   const [guestCounts, photoCounts] = await Promise.all([
     Guest.aggregate([{ $match: { event_id: { $in: eventIds } } }, { $group: { _id: '$event_id', total: { $sum: 1 } } }]),
@@ -43,17 +69,15 @@ export const listEvents = asyncHandler(async (_req, res) => {
 });
 
 export const createEvent = asyncHandler(async (req, res) => {
-  const event = await Event.create(eventPayload(req.body));
+  const event = await Event.create({
+    ...eventPayload(req.body),
+    admin_id: req.admin.admin_id || null
+  });
   res.status(201).json({ data: event });
 });
 
 export const getEvent = asyncHandler(async (req, res) => {
-  const event = await Event.findById(req.params.id);
-  if (!event) {
-    const error = new Error('Event not found');
-    error.status = 404;
-    throw error;
-  }
+  const event = await findAdminEvent(req, req.params.id);
 
   const [guest_total, photo_total, approved_total, pending_total] = await Promise.all([
     Guest.countDocuments({ event_id: event._id }),
@@ -66,7 +90,7 @@ export const getEvent = asyncHandler(async (req, res) => {
 });
 
 export const updateEvent = asyncHandler(async (req, res) => {
-  const event = await Event.findByIdAndUpdate(req.params.id, eventPayload(req.body), {
+  const event = await Event.findOneAndUpdate({ _id: req.params.id, ...adminEventScope(req) }, eventPayload(req.body), {
     new: true,
     runValidators: true
   });
@@ -79,12 +103,7 @@ export const updateEvent = asyncHandler(async (req, res) => {
 });
 
 export const deleteEvent = asyncHandler(async (req, res) => {
-  const event = await Event.findById(req.params.id);
-  if (!event) {
-    const error = new Error('Event not found');
-    error.status = 404;
-    throw error;
-  }
+  const event = await findAdminEvent(req, req.params.id);
 
   const photos = await Photo.find({ event_id: event._id });
   await Promise.allSettled(photos.map((photo) => deleteStoredPhoto(photo.storage_file_id)));
@@ -99,11 +118,13 @@ export const deleteEvent = asyncHandler(async (req, res) => {
 });
 
 export const listGuests = asyncHandler(async (req, res) => {
+  await findAdminEvent(req, req.params.id);
   const guests = await Guest.find({ event_id: req.params.id }).sort({ created_at: -1 });
   res.json({ data: guests });
 });
 
 export const listPhotos = asyncHandler(async (req, res) => {
+  await findAdminEvent(req, req.params.id);
   const query = { event_id: req.params.id };
   if (req.query.guest_id) query.guest_id = req.query.guest_id;
 
@@ -115,26 +136,13 @@ export const listPhotos = asyncHandler(async (req, res) => {
 });
 
 export const updatePhotoStatus = asyncHandler(async (req, res) => {
-  const photo = await Photo.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true, runValidators: true }
-  );
-  if (!photo) {
-    const error = new Error('Photo not found');
-    error.status = 404;
-    throw error;
-  }
+  await findAdminPhoto(req, req.params.id);
+  const photo = await Photo.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true, runValidators: true });
   res.json({ data: photo });
 });
 
 export const deletePhoto = asyncHandler(async (req, res) => {
-  const photo = await Photo.findById(req.params.id);
-  if (!photo) {
-    const error = new Error('Photo not found');
-    error.status = 404;
-    throw error;
-  }
+  const photo = await findAdminPhoto(req, req.params.id);
 
   await Promise.allSettled([
     deleteStoredPhoto(photo.storage_file_id),
@@ -146,12 +154,7 @@ export const deletePhoto = asyncHandler(async (req, res) => {
 });
 
 export const downloadEventZip = asyncHandler(async (req, res) => {
-  const event = await Event.findById(req.params.id);
-  if (!event) {
-    const error = new Error('Event not found');
-    error.status = 404;
-    throw error;
-  }
+  const event = await findAdminEvent(req, req.params.id);
 
   const photos = await Photo.find({ event_id: event._id }).populate('guest_id', 'name');
   const bucket = getGridBucket();
