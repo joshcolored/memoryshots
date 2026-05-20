@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import { Server } from 'socket.io';
 import { connectDatabase } from './config/db.js';
 import { attachGridBucket } from './config/gridfs.js';
+import { configureCloudinary } from './config/cloudinary.js';
 import apiRoutes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
@@ -42,6 +43,8 @@ io.on('connection', (socket) => {
 });
 
 const port = process.env.PORT || 5000;
+
+configureCloudinary();
 
 connectDatabase()
   .then(() => attachGridBucket())

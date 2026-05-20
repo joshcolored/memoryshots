@@ -4,7 +4,7 @@ Full-stack QR event photo sharing app for weddings, christenings, birthdays, cor
 
 ## What Is Included
 
-- `backend`: Express REST API with MongoDB, GridFS photo storage, JWT admin auth, JWT guest sessions, upload validation, admin moderation, ZIP download, guestbook messages, and Socket.IO gallery refresh events.
+- `backend`: Express REST API with MongoDB metadata, Cloudinary photo storage, JWT admin auth, JWT guest sessions, upload validation, admin moderation, ZIP download, guestbook messages, and Socket.IO gallery refresh events.
 - `frontend`: Next.js App Router with TypeScript, Tailwind CSS, Framer Motion, QR generation, guest camera capture, gallery uploads, public gallery, slideshow mode, and admin dashboard.
 
 The original requirements mention Laravel Sanctum for admin authentication, but this project is intentionally Express-only. The backend uses JWT auth instead, which matches the requested Node/Express API architecture. Admins can create accounts at `/admin/register`; new events are connected to the logged-in admin account.
@@ -46,7 +46,7 @@ Example:
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/memoryshots?retryWrites=true&w=majority
 ```
 
-Photos are stored in MongoDB GridFS using the `eventPhotos.files` and `eventPhotos.chunks` collections. Metadata lives in `events`, `guests`, `photos`, and `guestbookmessages`.
+Photos are stored in Cloudinary. MongoDB stores metadata in `events`, `guests`, `photos`, `admins`, and `guestbookmessages`.
 
 ### Option B: Local MongoDB
 
@@ -77,6 +77,10 @@ ADMIN_EMAIL=admin@memoryshots.local
 ADMIN_PASSWORD=change-this-password
 FRONTEND_URL=http://localhost:3000
 PUBLIC_API_URL=http://localhost:5000
+MAX_PHOTO_SIZE_MB=5
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 Admin login is controlled by `ADMIN_EMAIL` and `ADMIN_PASSWORD`. For production, use a long password and a long random `JWT_SECRET`.
@@ -104,7 +108,7 @@ Open `http://localhost:3000`.
 1. ExpressJS backend setup: `backend/package.json`, `src/server.js`
 2. MongoDB setup: `src/config/db.js`
 3. MongoDB integration: Mongoose models in `src/models`
-4. MongoDB Storage upload: GridFS service in `src/services/storageService.js`
+4. Cloudinary photo upload: Cloudinary service in `src/services/storageService.js`
 5. ExpressJS API routes: `src/routes/publicRoutes.js`, `src/routes/adminRoutes.js`
 6. JWT authentication: `src/middleware/auth.js`
 7. Next.js frontend setup: `frontend/app`, Tailwind, TypeScript config
@@ -153,6 +157,7 @@ Admin:
 5. Add environment variables from `backend/.env.example`.
 6. Set `FRONTEND_URL` to your Vercel domain.
 7. Set `PUBLIC_API_URL` to your Render service URL.
+8. Add your Cloudinary credentials: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
 
 ### Vercel Frontend
 
@@ -170,7 +175,26 @@ NEXT_PUBLIC_APP_URL=https://your-vercel-app.vercel.app
 ## Photo Rules
 
 - Allowed: jpg, jpeg, png, webp.
-- Max size: 5MB.
+- Max size: controlled by `MAX_PHOTO_SIZE_MB`, default `5MB`.
 - Guest upload requires a valid JWT session token.
 - Backend validates event status, guest ownership, and photo limit.
-- Stored path format: `events/{event_slug}/{guest_id}/{filename}`.
+- Cloudinary public ID format: `events/{event_slug}/{guest_id}/{filename}`.
+
+## Cloudinary Setup
+
+1. Create a Cloudinary account at `https://cloudinary.com`.
+2. Open your Cloudinary Console dashboard.
+3. Copy:
+   - Cloud name
+   - API key
+   - API secret
+4. Add these to `backend/.env` locally and to Render environment variables:
+
+```env
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+MAX_PHOTO_SIZE_MB=5
+```
+
+The app uploads guest photos from the Express backend to Cloudinary, then stores the Cloudinary `secure_url` and `public_id` in MongoDB.

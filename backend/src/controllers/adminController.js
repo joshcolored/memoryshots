@@ -1,12 +1,12 @@
 import archiver from 'archiver';
+import { Readable } from 'node:stream';
 import Event from '../models/Event.js';
 import Guest from '../models/Guest.js';
 import Photo from '../models/Photo.js';
 import GuestbookMessage from '../models/GuestbookMessage.js';
-import { getGridBucket } from '../config/gridfs.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { slugify } from '../utils/slugify.js';
-import { deleteStoredPhoto } from '../services/storageService.js';
+import { deleteStoredPhoto, getGridFsDownloadStream, isGridFsPhoto } from '../services/storageService.js';
 
 function eventPayload(body) {
   return {
@@ -175,17 +175,24 @@ export const downloadEventZip = asyncHandler(async (req, res) => {
   const event = await findAdminEvent(req, req.params.id);
 
   const photos = await Photo.find({ event_id: event._id }).populate('guest_id', 'name');
-  const bucket = getGridBucket();
   const archive = archiver('zip', { zlib: { level: 9 } });
 
   res.attachment(`${event.slug}-photos.zip`);
   archive.pipe(res);
 
-  photos.forEach((photo, index) => {
+  for (const [index, photo] of photos.entries()) {
     const guestName = photo.guest_id?.name?.replace(/[^a-z0-9_-]+/gi, '-') || 'guest';
     const name = `${guestName}/${index + 1}-${photo.original_filename || `${photo._id}.jpg`}`;
-    archive.append(bucket.openDownloadStream(photo.storage_file_id), { name });
-  });
+    if (isGridFsPhoto(photo.storage_file_id)) {
+      archive.append(await getGridFsDownloadStream(photo.storage_file_id), { name });
+      continue;
+    }
+
+    const response = await fetch(photo.image_url);
+    if (response.ok && response.body) {
+      archive.append(Readable.fromWeb(response.body), { name });
+    }
+  }
 
   await archive.finalize();
 });

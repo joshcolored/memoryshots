@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import { ObjectId } from 'mongodb';
 import { getGridBucket } from '../config/gridfs.js';
+import { cloudinary } from '../config/cloudinary.js';
 
 const extensionByType = {
   'image/jpeg': '.jpg',
@@ -11,30 +12,36 @@ const extensionByType = {
 };
 
 export async function storePhoto({ file, event, guest }) {
-  const bucket = getGridBucket();
   const ext = extensionByType[file.mimetype] || path.extname(file.originalname || '') || '.jpg';
-  const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
-  const storagePath = `events/${event.slug}/${guest._id}/${filename}`;
+  const filename = `${Date.now()}-${crypto.randomUUID()}`;
+  const publicId = `events/${event.slug}/${guest._id}/${filename}`;
 
   return new Promise((resolve, reject) => {
-    const uploadStream = bucket.openUploadStream(storagePath, {
-      contentType: file.mimetype,
-      metadata: {
-        event_id: event._id,
-        guest_id: guest._id,
-        original_filename: file.originalname
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        public_id: publicId,
+        resource_type: 'image',
+        overwrite: false,
+        use_filename: false,
+        unique_filename: false,
+        folder: undefined,
+        context: {
+          event_id: String(event._id),
+          guest_id: String(guest._id),
+          original_filename: file.originalname || ''
+        }
+      },
+      (error, result) => {
+        if (error || !result) return reject(error || new Error('Cloudinary upload failed'));
+        resolve({
+          fileId: result.public_id,
+          storagePath: `${publicId}${ext}`,
+          imageUrl: result.secure_url
+        });
       }
-    });
+    );
 
     uploadStream.end(file.buffer);
-    uploadStream.on('error', reject);
-    uploadStream.on('finish', () => {
-      resolve({
-        fileId: uploadStream.id,
-        storagePath,
-        imageUrl: `${process.env.PUBLIC_API_URL || ''}/api/photos/${uploadStream.id}/image`
-      });
-    });
   });
 }
 
@@ -54,6 +61,20 @@ export async function streamPhotoById(fileId, res) {
 }
 
 export async function deleteStoredPhoto(fileId) {
+  if (ObjectId.isValid(fileId)) {
+    const bucket = getGridBucket();
+    await bucket.delete(new ObjectId(fileId));
+    return;
+  }
+
+  await cloudinary.uploader.destroy(fileId, { resource_type: 'image' });
+}
+
+export function isGridFsPhoto(fileId) {
+  return ObjectId.isValid(fileId);
+}
+
+export async function getGridFsDownloadStream(fileId) {
   const bucket = getGridBucket();
-  await bucket.delete(new ObjectId(fileId));
+  return bucket.openDownloadStream(new ObjectId(fileId));
 }
