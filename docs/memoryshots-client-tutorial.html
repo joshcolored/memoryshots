@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MemoryShots Client Tutorial</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #22281d;
+      background: #fff8ec;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.55;
+    }
+
+    .cover {
+      min-height: 92vh;
+      display: grid;
+      align-content: center;
+      gap: 28px;
+      padding: 32px;
+      border: 6px solid #546b41;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 15% 12%, rgba(153, 173, 122, 0.38), transparent 230px),
+        radial-gradient(circle at 95% 88%, rgba(220, 204, 172, 0.62), transparent 260px),
+        #fff8ec;
+      page-break-after: always;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .mark {
+      width: 78px;
+      height: 78px;
+      border-radius: 20px;
+      background: #546b41;
+      display: grid;
+      place-items: center;
+    }
+
+    .mark svg {
+      width: 56px;
+      height: 56px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 54px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 620px;
+      font-size: 20px;
+      color: #546b41;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #546b41;
+      color: #fff8ec;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    main {
+      background: white;
+      padding: 0;
+    }
+
+    section {
+      page-break-inside: avoid;
+      margin: 0 0 22px;
+      padding: 18px 20px;
+      border: 1px solid rgba(84, 107, 65, 0.18);
+      border-radius: 14px;
+      background: #fffdfa;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      color: #546b41;
+      font-size: 22px;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    ul, ol {
+      margin: 8px 0 0 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    code {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #eef2e4;
+      color: #22281d;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .callout {
+      padding: 14px 16px;
+      border-left: 5px solid #99ad7a;
+      background: #eef2e4;
+      border-radius: 10px;
+      color: #3f5330;
+      font-weight: 700;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #546b41;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 64 64" fill="none">
+          <path d="M9 24c0-5 4-9 9-9h7l4-7h14l4 7h7c5 0 9 4 9 9v24c0 5-4 9-9 9H18c-5 0-9-4-9-9V24Z" fill="#FFF8EC"/>
+          <circle cx="32" cy="36" r="13" fill="#546B41"/>
+          <circle cx="32" cy="36" r="6" fill="#99AD7A"/>
+        </svg>
+      </div>
+      <div>
+        <h1>MemoryShots</h1>
+        <p class="subtitle">Client Tutorial and Event Admin Guide</p>
+      </div>
+    </div>
+    <p class="subtitle">A QR event photo sharing system for weddings, birthdays, christenings, corporate events, anniversaries, and private celebrations.</p>
+    <div class="badge-row">
+      <span class="badge">Scan</span>
+      <span class="badge">Snap</span>
+      <span class="badge">Share</span>
+      <span class="badge">Approve</span>
+      <span class="badge">Download</span>
+    </div>
+  </div>
+
+  <main>
+    <section>
+      <h2>1. Login To Your Admin Account</h2>
+      <ol>
+        <li>Open the MemoryShots website.</li>
+        <li>Click <strong>Login</strong>.</li>
+        <li>Enter your admin email and password.</li>
+        <li>Click <strong>Login</strong>.</li>
+      </ol>
+      <p>After logging in, you will be redirected to the Dashboard.</p>
+    </section>
+
+    <section>
+      <h2>2. Create An Event</h2>
+      <ol>
+        <li>From the Dashboard, click <strong>Create event</strong>.</li>
+        <li>Fill in the event title, event type, photo limit, cover image, event date, and settings.</li>
+        <li>Click <strong>Create event</strong>.</li>
+      </ol>
+      <div class="callout">The system automatically creates a random event link slug. You do not need to type the event URL manually.</div>
+    </section>
+
+    <section>
+      <h2>3. Download The QR Poster</h2>
+      <ol>
+        <li>Open the event from the Dashboard.</li>
+        <li>Find the QR code panel.</li>
+        <li>Click <strong>Poster PNG</strong>.</li>
+        <li>Print the poster and place it around the venue.</li>
+      </ol>
+      <p>Suggested locations: entrance, guest tables, registration table, photo booth area, stage, or screen area.</p>
+    </section>
+
+    <section>
+      <h2>4. Share The Event Link</h2>
+      <p>Use the <strong>Copy</strong> button to copy the event link, or click <strong>Guest link</strong> to open it.</p>
+      <p>You can share the link through Messenger, Viber, WhatsApp, email, or an event group chat.</p>
+    </section>
+
+    <section>
+      <h2>5. Guest Photo Upload Flow</h2>
+      <ol>
+        <li>Guest scans the QR code.</li>
+        <li>Guest enters their name or nickname.</li>
+        <li>Guest taps <strong>Take photo</strong> or <strong>Upload</strong>.</li>
+        <li>Guest chooses a filter, if desired.</li>
+        <li>Guest previews the photo.</li>
+        <li>Guest taps <strong>Upload</strong>.</li>
+      </ol>
+      <p>Each guest is limited to <strong>16 photos per event</strong>.</p>
+    </section>
+
+    <section>
+      <h2>6. Approve Photos</h2>
+      <p>Uploaded photos are hidden until approved by the admin.</p>
+      <ol>
+        <li>Open the event from the Dashboard.</li>
+        <li>Scroll to the Photos section.</li>
+        <li>Click <strong>Approve</strong> to make a photo public.</li>
+        <li>Click <strong>Hide</strong> to remove a photo from the public gallery.</li>
+        <li>Click <strong>Delete</strong> to permanently remove a photo.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>7. Public Gallery And TV Mode</h2>
+      <p>The public gallery is available at <code>/event/event-slug/gallery</code>.</p>
+      <p>Only approved photos appear publicly.</p>
+      <p>TV mode is available at <code>/event/event-slug/gallery?tv=1</code>.</p>
+      <p>TV mode automatically slides photos every 3 seconds and includes a queue list with thumbnails, guest names, and capture dates.</p>
+    </section>
+
+    <section>
+      <h2>8. Download All Photos</h2>
+      <ol>
+        <li>Open the event from the Dashboard.</li>
+        <li>Click <strong>ZIP</strong>.</li>
+        <li>The system downloads all event photos as a ZIP file.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>9. Delete An Event</h2>
+      <p>Only delete an event when you are sure.</p>
+      <p>Deleting an event removes the event details, guest records, photo records, guestbook messages, and stored photos.</p>
+    </section>
+
+    <section>
+      <h2>10. Best Practices</h2>
+      <div class="two-col">
+        <div>
+          <h2>Before Event</h2>
+          <ul>
+            <li>Create the event early.</li>
+            <li>Test the QR code using your phone.</li>
+            <li>Print multiple QR posters.</li>
+            <li>Test guest upload and admin approval.</li>
+            <li>Test TV mode if using a screen.</li>
+          </ul>
+        </div>
+        <div>
+          <h2>During Event</h2>
+          <ul>
+            <li>Keep the admin dashboard open.</li>
+            <li>Approve good photos regularly.</li>
+            <li>Use TV mode to encourage guest uploads.</li>
+            <li>Download the ZIP after the event.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>11. Troubleshooting</h2>
+      <p><strong>Camera does not open:</strong> Use the HTTPS website link. Camera access may not work on non-secure HTTP links.</p>
+      <p><strong>Guest cannot upload:</strong> The event may be inactive, the guest may have reached 16 photos, the file may be too large, or the file type may be unsupported.</p>
+      <p><strong>Photo does not show publicly:</strong> The photo must be approved by the admin first.</p>
+      <p><strong>TV mode does not update:</strong> Refresh the TV mode page and check that the backend service is running.</p>
+    </section>
+
+    <section>
+      <h2>12. Quick Admin Checklist</h2>
+      <ul>
+        <li>Login works</li>
+        <li>Event created</li>
+        <li>QR poster downloaded</li>
+        <li>QR poster tested</li>
+        <li>Guest upload tested</li>
+        <li>Admin approval tested</li>
+        <li>Gallery tested</li>
+        <li>TV mode tested</li>
+        <li>ZIP download tested</li>
+      </ul>
+    </section>
+
+    <p class="footer">MemoryShots - Scan. Snap. Share.</p>
+  </main>
+</body>
+</html>
