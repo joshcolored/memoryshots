@@ -11,8 +11,8 @@ import { Field } from '@/components/ui/Field';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@memoryshots.local');
-  const [password, setPassword] = useState('change-this-password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {
