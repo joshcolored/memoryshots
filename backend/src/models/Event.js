@@ -10,7 +10,7 @@ const eventSchema = new mongoose.Schema(
       enum: ['Wedding', 'Christening', 'Birthday', 'Corporate', 'Anniversary', 'Custom'],
       default: 'Wedding'
     },
-    photo_limit: { type: Number, default: 24, min: 1, max: 200 },
+    photo_limit: { type: Number, default: 16, min: 1, max: 16 },
     cover_image: { type: String, default: '' },
     event_date: { type: Date, required: true },
     is_active: { type: Boolean, default: true },

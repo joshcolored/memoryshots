@@ -20,9 +20,8 @@ const router = express.Router();
 
 const eventValidation = [
   body('title').trim().isLength({ min: 2, max: 120 }),
-  body('slug').optional({ checkFalsy: true }).trim().isSlug(),
   body('event_type').isIn(['Wedding', 'Christening', 'Birthday', 'Corporate', 'Anniversary', 'Custom']),
-  body('photo_limit').isInt({ min: 1, max: 200 }),
+  body('photo_limit').isInt({ min: 1, max: 16 }),
   body('cover_image').optional({ checkFalsy: true }).isURL(),
   body('event_date').isISO8601(),
   body('is_active').isBoolean(),

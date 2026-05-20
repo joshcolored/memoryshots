@@ -1,4 +1,5 @@
 import archiver from 'archiver';
+import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import Event from '../models/Event.js';
 import Guest from '../models/Guest.js';
@@ -11,15 +12,26 @@ import { deleteStoredPhoto, getGridFsDownloadStream, isGridFsPhoto } from '../se
 function eventPayload(body) {
   return {
     title: body.title,
-    slug: body.slug ? slugify(body.slug) : slugify(body.title),
     event_type: body.event_type,
-    photo_limit: Number(body.photo_limit || 24),
+    photo_limit: Math.min(Number(body.photo_limit || 16), 16),
     cover_image: body.cover_image || '',
     event_date: body.event_date,
     is_active: Boolean(body.is_active),
     watermark_enabled: Boolean(body.watermark_enabled),
     guestbook_enabled: body.guestbook_enabled !== false
   };
+}
+
+async function generateUniqueEventSlug(title) {
+  const base = slugify(title) || 'event';
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const suffix = crypto.randomBytes(3).toString('hex');
+    const slug = `${base}-${suffix}`;
+    const exists = await Event.exists({ slug });
+    if (!exists) return slug;
+  }
+
+  return `${base}-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
 }
 
 function adminEventScope(req) {
@@ -71,6 +83,7 @@ export const listEvents = asyncHandler(async (req, res) => {
 export const createEvent = asyncHandler(async (req, res) => {
   const event = await Event.create({
     ...eventPayload(req.body),
+    slug: await generateUniqueEventSlug(req.body.title),
     admin_id: req.admin.admin_id || null
   });
   res.status(201).json({ data: event });
