@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { Camera, LogIn, UserPlus } from 'lucide-react';
+import { HomeAuthRedirect } from '@/components/admin/HomeAuthRedirect';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen px-5 py-8">
+      <HomeAuthRedirect />
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl flex-col justify-center gap-8">
         <div className="max-w-2xl">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-moss px-4 py-2 text-sm font-semibold text-cream">
