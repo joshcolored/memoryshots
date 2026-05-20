@@ -77,20 +77,29 @@ export default function GalleryPage() {
             </div>
           </header>
 
-          <div className="relative grid min-h-[58vh] place-items-center overflow-hidden rounded-3xl bg-black shadow-soft sm:min-h-[70vh]">
-            <img
-              src={photo.image_url}
-              alt="Featured slideshow photo"
-              className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl"
-            />
-            <img
-              src={photo.image_url}
-              alt="Featured slideshow photo"
-              className="relative z-10 max-h-[70vh] max-w-full object-contain"
-            />
+          <div className="relative min-h-[58vh] overflow-hidden rounded-3xl bg-black shadow-soft sm:min-h-[70vh]">
+            <div
+              className="flex h-[58vh] transition-transform duration-700 ease-out sm:h-[70vh]"
+              style={{ transform: `translateX(-${index * 100}%)` }}
+            >
+              {photos.map((slide) => (
+                <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
+                  <img
+                    src={slide.image_url}
+                    alt="Carousel backdrop"
+                    className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl"
+                  />
+                  <img
+                    src={slide.image_url}
+                    alt="TV carousel photo"
+                    className="relative z-10 max-h-[70vh] max-w-full object-contain"
+                  />
+                </div>
+              ))}
+            </div>
             <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/45 p-4 backdrop-blur">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-parchment">Now showing</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Carousel · Now showing</p>
                 <h2 className="text-xl font-black">{photo.guest_id?.name || 'Guest'}</h2>
                 <p className="text-sm text-parchment">{new Date(photo.created_at).toLocaleString()}</p>
               </div>
@@ -114,7 +123,10 @@ export default function GalleryPage() {
 
           <section className="rounded-3xl bg-cream/10 p-3 ring-1 ring-cream/15 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-parchment">Queue</h2>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-parchment">Up Next Queue</h2>
+                <p className="mt-1 text-xs text-parchment">Tap a memory to jump it onto the carousel.</p>
+              </div>
               <Button variant="ghost" onClick={nextPhoto}><ChevronRight size={16} /> Next</Button>
             </div>
             <div className="grid max-h-[34vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
