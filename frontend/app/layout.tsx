@@ -5,7 +5,12 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'MemoryShots',
-  description: 'QR event photo sharing for meaningful celebrations'
+  description: 'QR event photo sharing for meaningful celebrations',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/brand/memoryshots-mark.svg'
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

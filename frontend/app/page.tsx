@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Camera, CheckCircle2, Clapperboard, Images, LogIn, QrCode, ShieldCheck, Tv } from 'lucide-react';
 import { HomeAuthRedirect } from '@/components/admin/HomeAuthRedirect';
 import { EventIllustration } from '@/components/landing/EventIllustration';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export default function HomePage() {
   return (
@@ -12,7 +13,7 @@ export default function HomePage() {
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-moss px-4 py-2 text-sm font-semibold text-cream">
             <Camera size={16} /> Digital disposable camera
           </div>
-          <h1 className="text-5xl font-black tracking-normal text-ink sm:text-7xl">MemoryShots</h1>
+          <BrandLogo />
           <p className="mt-5 max-w-xl text-lg leading-8 text-moss">
             A premium QR photo sharing experience for weddings, birthdays, christenings, corporate events, and private celebrations.
           </p>

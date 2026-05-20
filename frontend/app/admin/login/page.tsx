@@ -9,6 +9,7 @@ import { saveAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/Spinner';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function AdminLoginPage() {
     <main className="grid min-h-screen place-items-center px-5 py-10">
       <form onSubmit={submit} className="grid w-full max-w-md gap-5 rounded-2xl bg-cream/85 p-6 shadow-soft">
         <div>
+          <div className="mb-5"><BrandLogo compact /></div>
           <div className="mb-4 inline-flex rounded-full bg-moss p-3 text-cream"><Lock /></div>
           <h1 className="text-3xl font-black text-ink">Login</h1>
           <p className="mt-2 text-sm text-moss">Manage events, approvals, guests, QR codes, and downloads.</p>

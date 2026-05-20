@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Download, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, Trash2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import type { EventRecord, Photo } from '@/types';
@@ -103,6 +103,7 @@ export default function EventDetailPage() {
             <p className="mt-1 text-moss">{stats.photo_total || 0} uploads · {stats.guest_total || 0} guests · {stats.pending_total || 0} pending</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => router.push('/admin/dashboard')}><ArrowLeft size={16} /> Dashboard</Button>
             <a href={`${APP_URL}/event/${event.slug}`} target="_blank"><Button variant="ghost"><ExternalLink size={16} /> Guest link</Button></a>
             <Button onClick={async () => {
               const token = getAdminToken();

@@ -1,0 +1,13 @@
+<svg width="980" height="260" viewBox="0 0 980 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="980" height="260" rx="52" fill="#FFF8EC"/>
+  <g transform="translate(48 34)">
+    <rect width="192" height="192" rx="44" fill="#546B41"/>
+    <path d="M31 73C31 61.954 39.954 53 51 53H75L87 34H126L138 53H162C173.046 53 182 61.954 182 73V147C182 158.046 173.046 167 162 167H51C39.954 167 31 158.046 31 147V73Z" fill="#FFF8EC"/>
+    <circle cx="106.5" cy="113.5" r="39.5" fill="#546B41"/>
+    <circle cx="106.5" cy="113.5" r="20.5" fill="#99AD7A"/>
+    <path d="M151 28C166 43 174 59 175 78C155 77 139 68 124 53C139 51 148 42 151 28Z" fill="#99AD7A"/>
+  </g>
+  <text x="278" y="116" fill="#22281D" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="900">MemoryShots</text>
+  <text x="282" y="166" fill="#546B41" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Scan. Snap. Share.</text>
+  <text x="282" y="205" fill="#546B41" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="500">QR event photo sharing for meaningful celebrations</text>
+</svg>

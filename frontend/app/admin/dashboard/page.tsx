@@ -9,6 +9,7 @@ import type { EventRecord } from '@/types';
 import { adminApi } from '@/lib/api';
 import { clearAdminToken, getAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function DashboardPage() {
       <section className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
+            <div className="mb-3"><BrandLogo compact /></div>
             <h1 className="text-4xl font-black text-ink">Dashboard</h1>
             <p className="mt-2 text-moss">A calm command center for every celebration.</p>
           </div>
