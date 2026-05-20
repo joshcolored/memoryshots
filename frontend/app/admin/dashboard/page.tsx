@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarPlus, Image, LogOut, Users } from 'lucide-react';
+import { CalendarPlus, Image, LogOut, X, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { EventRecord } from '@/types';
@@ -14,6 +14,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 export default function DashboardPage() {
   const router = useRouter();
   const [events, setEvents] = useState<EventRecord[]>([]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const token = getAdminToken();
@@ -45,13 +46,7 @@ export default function DashboardPage() {
             <Link href="/admin/events/create"><Button><CalendarPlus size={18} /> Create event</Button></Link>
             <Button
               variant="ghost"
-              onClick={() => {
-                const confirmed = window.confirm('Are you sure you want to logout?');
-                if (!confirmed) return;
-                clearAdminToken();
-                toast.success('Logged out');
-                router.push('/admin/login');
-              }}
+              onClick={() => setShowLogoutModal(true)}
             >
               <LogOut size={18} /> Logout
             </Button>
@@ -80,6 +75,41 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/60 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-cream p-6 shadow-soft ring-1 ring-moss/15">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-4 inline-flex rounded-full bg-moss p-3 text-cream">
+                  <LogOut size={22} />
+                </div>
+                <h2 className="text-2xl font-black text-ink">Logout?</h2>
+                <p className="mt-2 text-sm leading-6 text-moss">Are you sure you want to logout?</p>
+              </div>
+              <button
+                className="grid size-10 place-items-center rounded-full bg-white/70 text-moss ring-1 ring-moss/10"
+                onClick={() => setShowLogoutModal(false)}
+                aria-label="Close logout confirmation"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Button variant="ghost" onClick={() => setShowLogoutModal(false)}>Cancel</Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  clearAdminToken();
+                  toast.success('Logged out');
+                  router.push('/admin/login');
+                }}
+              >
+                <LogOut size={18} /> Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
