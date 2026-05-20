@@ -28,8 +28,22 @@ export default function GuestEventPage() {
     publicApi.event(slug).then(({ data }) => {
       setEvent(data);
       const saved = localStorage.getItem(guestTokenKey(slug));
-      if (saved) setToken(saved);
-      setRemaining(data.photo_limit);
+      if (!saved) {
+        setRemaining(data.photo_limit);
+        return;
+      }
+
+      setToken(saved);
+      publicApi.session(slug, saved)
+        .then((session) => {
+          setEvent(session.event);
+          setRemaining(session.remaining);
+        })
+        .catch(() => {
+          localStorage.removeItem(guestTokenKey(slug));
+          setToken(null);
+          setRemaining(data.photo_limit);
+        });
     }).catch((error) => toast.error(error.message));
   }, [slug]);
 

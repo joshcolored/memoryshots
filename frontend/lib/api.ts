@@ -18,6 +18,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export const publicApi = {
   event: (slug: string) => request<{ data: EventRecord }>(`/api/events/${slug}`),
+  session: (slug: string, token: string) =>
+    request<{ guest: { id: string; name: string; photo_count: number }; event: EventRecord; remaining: number }>(
+      `/api/events/${slug}/session`,
+      { token }
+    ),
   join: (slug: string, name: string) =>
     request<{ token: string; guest: { id: string; name: string; photo_count: number }; event: EventRecord; remaining: number }>(
       `/api/events/${slug}/join`,

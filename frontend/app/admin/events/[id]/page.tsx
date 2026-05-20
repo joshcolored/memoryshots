@@ -114,8 +114,12 @@ export default function EventDetailPage() {
                     <span className="font-bold">{photo.status}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="ghost" onClick={() => setStatus(photo._id, 'approved')}>Approve</Button>
-                    <Button variant="ghost" onClick={() => setStatus(photo._id, 'hidden')}>Hide</Button>
+                    {photo.status !== 'approved' && (
+                      <Button variant="ghost" onClick={() => setStatus(photo._id, 'approved')}>Approve</Button>
+                    )}
+                    {photo.status !== 'hidden' && (
+                      <Button variant="ghost" className={photo.status === 'approved' ? 'col-span-2' : ''} onClick={() => setStatus(photo._id, 'hidden')}>Hide</Button>
+                    )}
                     <Button variant="danger" className="col-span-2" onClick={() => removePhoto(photo._id)}><Trash2 size={16} /> Delete</Button>
                   </div>
                 </div>

@@ -56,6 +56,20 @@ export const joinEvent = asyncHandler(async (req, res) => {
   });
 });
 
+export const getGuestSession = asyncHandler(async (req, res) => {
+  if (req.event.slug !== req.params.slug) {
+    const error = new Error('Guest session does not belong to this event');
+    error.status = 403;
+    throw error;
+  }
+
+  res.json({
+    guest: { id: req.guest._id, name: req.guest.name, photo_count: req.guest.photo_count },
+    event: publicEvent(req.event),
+    remaining: Math.max(req.event.photo_limit - req.guest.photo_count, 0)
+  });
+});
+
 export const uploadGuestPhoto = asyncHandler(async (req, res) => {
   if (!req.file) {
     const error = new Error('Photo file is required');
