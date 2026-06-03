@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Check, Download, ExternalLink, MailOpen, Trash2 } from 'lucide-react';
+import { ArrowLeft, Bell, Check, Download, ExternalLink, MailOpen, Trash2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import type { EventRecord, GuestbookMessage, Photo } from '@/types';
@@ -12,11 +12,28 @@ import { Button } from '@/components/ui/Button';
 import { EventForm } from '@/components/admin/EventForm';
 import { QRCodePanel } from '@/components/admin/QRCodePanel';
 
-function playGuestbookTing() {
-  const AudioContextConstructor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AudioContextConstructor) return;
+let guestbookAudioContext: AudioContext | null = null;
 
-  const context = new AudioContextConstructor();
+function getGuestbookAudioContext() {
+  const AudioContextConstructor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextConstructor) return null;
+  guestbookAudioContext ||= new AudioContextConstructor();
+  return guestbookAudioContext;
+}
+
+async function unlockGuestbookAudio() {
+  const context = getGuestbookAudioContext();
+  if (!context) return false;
+  if (context.state === 'suspended') await context.resume();
+  return context.state === 'running';
+}
+
+async function playGuestbookTing() {
+  const context = getGuestbookAudioContext();
+  if (!context) return false;
+  if (context.state === 'suspended') await context.resume();
+  if (context.state !== 'running') return false;
+
   const oscillator = context.createOscillator();
   const gain = context.createGain();
 
@@ -31,9 +48,7 @@ function playGuestbookTing() {
   gain.connect(context.destination);
   oscillator.start();
   oscillator.stop(context.currentTime + 0.36);
-  oscillator.onended = () => {
-    context.close().catch(() => {});
-  };
+  return true;
 }
 
 export default function EventDetailPage() {
@@ -46,6 +61,7 @@ export default function EventDetailPage() {
   const [guestbookMessages, setGuestbookMessages] = useState<GuestbookMessage[]>([]);
   const [guests, setGuests] = useState<Array<{ _id: string; name: string; photo_count: number }>>([]);
   const [guestFilter, setGuestFilter] = useState('');
+  const [soundReady, setSoundReady] = useState(false);
 
   function sortGuestbookMessages(messages: GuestbookMessage[]) {
     return [...messages].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -72,6 +88,28 @@ export default function EventDetailPage() {
   }, [guestFilter]);
 
   useEffect(() => {
+    const unlock = () => {
+      unlockGuestbookAudio()
+        .then(setSoundReady)
+        .catch(() => setSoundReady(false));
+    };
+
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, []);
+
+  async function enableGuestbookSound() {
+    const ready = await unlockGuestbookAudio();
+    setSoundReady(ready);
+    toast[ready ? 'success' : 'error'](ready ? 'Guestbook sound enabled' : 'Sound could not be enabled');
+  }
+
+  useEffect(() => {
     if (!event?.slug) return;
     const socket = io(API_URL);
     socket.emit('join-event', event.slug);
@@ -84,7 +122,7 @@ export default function EventDetailPage() {
         if (current.some((item) => item._id === message._id)) return current;
         return sortGuestbookMessages([message, ...current]);
       });
-      playGuestbookTing();
+      playGuestbookTing().catch(() => {});
       toast.info(`New guestbook message from ${message.guest_id?.name || 'Guest'}`);
     });
 
@@ -198,6 +236,9 @@ export default function EventDetailPage() {
                 <div className="flex flex-wrap gap-2 text-sm font-black">
                   <span className="rounded-lg bg-moss px-3 py-2 text-cream">Unread {unreadMessages}</span>
                   <span className="rounded-lg bg-white/70 px-3 py-2 text-moss ring-1 ring-moss/10">Read {readMessages}</span>
+                  <Button variant="ghost" className="min-h-9 px-3 py-2 text-sm" onClick={enableGuestbookSound}>
+                    <Bell size={15} /> {soundReady ? 'Sound on' : 'Sound'}
+                  </Button>
                 </div>
               </div>
 
