@@ -115,12 +115,29 @@ export const listPublicGallery = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const photos = await Photo.find({ event_id: event._id, status: 'approved' })
-    .sort({ created_at: -1 })
-    .populate('guest_id', 'name')
-    .lean();
+  const page = Math.max(Number(req.query.page || 1), 1);
+  const limit = Math.min(Math.max(Number(req.query.limit || 10), 1), 50);
+  const query = { event_id: event._id, status: 'approved' };
+  const [photos, total] = await Promise.all([
+    Photo.find(query)
+      .sort({ created_at: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('guest_id', 'name')
+      .lean(),
+    Photo.countDocuments(query)
+  ]);
 
-  res.json({ data: photos, event: publicEvent(event) });
+  res.json({
+    data: photos,
+    event: publicEvent(event),
+    meta: {
+      page,
+      limit,
+      total,
+      total_pages: Math.max(Math.ceil(total / limit), 1)
+    }
+  });
 });
 
 export const createGuestbookMessage = asyncHandler(async (req, res) => {

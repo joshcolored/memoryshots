@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, RefreshCw, Upload, X } from 'lucide-react';
+import type { PointerEvent } from 'react';
+import { Camera, RefreshCw, RotateCcw, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
@@ -71,6 +72,8 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   const [openingCamera, setOpeningCamera] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [filterId, setFilterId] = useState<FilterId>('clean');
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
   const selectedFilter = getFilter(filterId);
 
   useEffect(() => {
@@ -104,7 +107,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
 
     let cancelled = false;
     setProcessing(true);
-    processImageFile(sourceFile, filterId)
+    processImageFile(sourceFile, 'clean')
       .then((filteredFile) => {
         if (cancelled) return;
         setPreview(filteredFile);
@@ -123,19 +126,21 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filterId, sourceFile]);
+  }, [sourceFile]);
 
-  async function openCamera() {
+  async function openCamera(mode = facingMode) {
     setOpeningCamera(true);
     try {
+      stream?.getTracks().forEach((track) => track.stop());
       const media = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' },
+          facingMode: { ideal: mode },
           width: { ideal: 1920 },
           height: { ideal: 2560 }
         },
         audio: false
       });
+      setFacingMode(mode);
       setStream(media);
     } catch {
       toast.error('Camera access was blocked. You can still upload from gallery.');
@@ -147,6 +152,43 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   function closeCamera() {
     stream?.getTracks().forEach((track) => track.stop());
     setStream(null);
+  }
+
+  async function switchCamera() {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    await openCamera(nextMode);
+  }
+
+  async function focusCamera(event: PointerEvent<HTMLVideoElement>) {
+    const video = videoRef.current;
+    const track = stream?.getVideoTracks()[0];
+    if (!video || !track) return;
+
+    const rect = video.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    setFocusPoint({ x: x * 100, y: y * 100 });
+    window.setTimeout(() => setFocusPoint(null), 700);
+
+    const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & {
+      focusMode?: string[];
+      pointsOfInterest?: boolean;
+    };
+    const canFocus = capabilities?.focusMode?.includes('single-shot') || capabilities?.focusMode?.includes('continuous');
+    if (!canFocus && !capabilities?.pointsOfInterest) return;
+
+    try {
+      await track.applyConstraints({
+        advanced: [
+          {
+            focusMode: capabilities.focusMode?.includes('single-shot') ? 'single-shot' : 'continuous',
+            pointsOfInterest: [{ x, y }]
+          } as MediaTrackConstraintSet
+        ]
+      });
+    } catch {
+      // Some browsers report focus support but reject point focus constraints.
+    }
   }
 
   async function capture() {
@@ -164,6 +206,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     canvas.height = Math.round(video.videoHeight * ratio);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.filter = selectedFilter.css;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('Capture failed'))), 'image/jpeg', 0.88);
@@ -194,17 +237,28 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   return (
     <div className="grid gap-4">
       {stream && (
-        <div className="overflow-hidden rounded-2xl bg-ink shadow-soft">
+        <div className="relative overflow-hidden rounded-2xl bg-ink shadow-soft">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
+            onPointerDown={focusCamera}
             className="aspect-[3/4] w-full bg-ink object-cover"
             style={{ filter: selectedFilter.css }}
           />
-          <div className="grid grid-cols-2 gap-2 p-3">
+          {focusPoint && (
+            <div
+              className="pointer-events-none absolute grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-cream shadow-soft"
+              style={{ left: `${focusPoint.x}%`, top: `${focusPoint.y}%` }}
+            />
+          )}
+          <div className="grid grid-cols-3 gap-2 p-3">
             <Button onClick={capture}><Camera size={18} /> Capture</Button>
+            <Button disabled={openingCamera} variant="ghost" onClick={switchCamera}>
+              {openingCamera ? <Spinner /> : <RotateCcw size={18} />}
+              Flip
+            </Button>
             <Button variant="ghost" onClick={closeCamera}><X size={18} /> Close</Button>
           </div>
         </div>
@@ -223,27 +277,29 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
         </div>
       )}
 
-      <div className="grid gap-2 rounded-2xl bg-cream/80 p-3 shadow-soft">
-        <div className="text-xs font-bold uppercase tracking-widest text-moss">Filter</div>
-        <div className="grid grid-cols-5 gap-2">
-          {filters.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setFilterId(filter.id)}
-              className={`rounded-lg px-2 py-3 text-xs font-black transition ${
-                filterId === filter.id ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
+      {stream && (
+        <div className="grid gap-2 rounded-2xl bg-cream/80 p-3 shadow-soft">
+          <div className="text-xs font-bold uppercase tracking-widest text-moss">Filter</div>
+          <div className="grid grid-cols-5 gap-2">
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setFilterId(filter.id)}
+                className={`rounded-lg px-2 py-3 text-xs font-black transition ${
+                  filterId === filter.id ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {!stream && !preview && (
         <div className="grid grid-cols-2 gap-3">
-          <Button disabled={disabled || openingCamera} onClick={openCamera}>
+          <Button disabled={disabled || openingCamera} onClick={() => openCamera()}>
             {openingCamera ? <Spinner /> : <Camera size={18} />}
             {openingCamera ? 'Opening...' : 'Take photo'}
           </Button>

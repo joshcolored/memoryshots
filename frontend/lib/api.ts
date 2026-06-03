@@ -4,6 +4,8 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 type RequestOptions = RequestInit & { token?: string | null };
+type GalleryOptions = { page?: number; limit?: number };
+export type PaginationMeta = { page: number; limit: number; total: number; total_pages: number };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
@@ -33,7 +35,15 @@ export const publicApi = {
     form.append('photo', file);
     return request<{ remaining: number; message: string }>(`/api/events/${slug}/photos`, { method: 'POST', body: form, token });
   },
-  gallery: (slug: string) => request<{ data: Photo[]; event: EventRecord }>(`/api/events/${slug}/gallery`),
+  gallery: (slug: string, options: GalleryOptions = {}) => {
+    const params = new URLSearchParams();
+    if (options.page) params.set('page', String(options.page));
+    if (options.limit) params.set('limit', String(options.limit));
+    const query = params.toString();
+    return request<{ data: Photo[]; event: EventRecord; meta?: PaginationMeta }>(
+      `/api/events/${slug}/gallery${query ? `?${query}` : ''}`
+    );
+  },
   guestbook: (slug: string, token: string, message: string) =>
     request(`/api/events/${slug}/guestbook`, { method: 'POST', body: JSON.stringify({ message }), token })
 };

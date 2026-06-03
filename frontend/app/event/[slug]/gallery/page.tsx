@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { io } from 'socket.io-client';
 import { Camera, ChevronLeft, ChevronRight, MonitorPlay, Pause, Play, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { EventRecord, Photo } from '@/types';
-import { API_URL, publicApi } from '@/lib/api';
+import { API_URL, publicApi, type PaginationMeta } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
 import { Spinner } from '@/components/ui/Spinner';
+
+const GALLERY_LIMIT = 10;
 
 export default function GalleryPage() {
   const params = useParams<{ slug: string }>();
@@ -22,24 +24,32 @@ export default function GalleryPage() {
   const [autoPlay, setAutoPlay] = useState(true);
   const [tvLoading, setTvLoading] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [galleryPage, setGalleryPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const pageRef = useRef(1);
 
-  async function load() {
-    const response = await publicApi.gallery(slug);
+  const load = useCallback(async (page = pageRef.current) => {
+    const response = await publicApi.gallery(slug, { page, limit: GALLERY_LIMIT });
+    const meta = response.meta || { page, limit: GALLERY_LIMIT, total: response.data.length, total_pages: 1 };
     setEvent(response.event);
     setPhotos(response.data);
-  }
+    setPagination(meta);
+    setGalleryPage(meta.page);
+    pageRef.current = meta.page;
+  }, [slug]);
 
   useEffect(() => {
     load().catch((error) => toast.error(error.message));
     const socket = io(API_URL);
     socket.emit('join-event', slug);
-    socket.on('photo:new', load);
-    socket.on('photo:updated', load);
-    socket.on('photo:deleted', load);
+    const refreshGallery = () => load().catch((error) => toast.error(error.message));
+    socket.on('photo:new', refreshGallery);
+    socket.on('photo:updated', refreshGallery);
+    socket.on('photo:deleted', refreshGallery);
     return () => {
       socket.disconnect();
     };
-  }, [slug]);
+  }, [load, slug]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -47,21 +57,29 @@ export default function GalleryPage() {
   }, []);
 
   useEffect(() => {
-    if (!slideshow || !autoPlay || !photos.length) return;
-    const timer = setInterval(() => setIndex((current) => (current + 1) % photos.length), 3000);
-    return () => clearInterval(timer);
-  }, [autoPlay, slideshow, photos.length]);
+    if (!slideshow || !autoPlay || photos.length < 2) return;
+    const timer = window.setTimeout(() => {
+      setIndex((current) => (current + 1) % photos.length);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [autoPlay, index, slideshow, photos.length]);
 
   useEffect(() => {
     if (index >= photos.length) setIndex(0);
   }, [index, photos.length]);
 
   function nextPhoto() {
+    if (!photos.length) return;
     setIndex((current) => (current + 1) % photos.length);
   }
 
   function previousPhoto() {
+    if (!photos.length) return;
     setIndex((current) => (current - 1 + photos.length) % photos.length);
+  }
+
+  function goToPage(page: number) {
+    load(page).catch((error) => toast.error(error.message));
   }
 
   function markLoaded(photoId: string) {
@@ -266,6 +284,19 @@ export default function GalleryPage() {
           </section>
         )}
         <GalleryGrid photos={photos} />
+        {pagination && pagination.total_pages > 1 && (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button variant="ghost" disabled={galleryPage <= 1} onClick={() => goToPage(galleryPage - 1)}>
+              <ChevronLeft size={16} /> Prev
+            </Button>
+            <span className="rounded-lg bg-cream/80 px-4 py-2 text-sm font-black text-moss shadow-soft">
+              Page {galleryPage} / {pagination.total_pages}
+            </span>
+            <Button disabled={galleryPage >= pagination.total_pages} onClick={() => goToPage(galleryPage + 1)}>
+              Next <ChevronRight size={16} />
+            </Button>
+          </div>
+        )}
       </section>
     </main>
   );
