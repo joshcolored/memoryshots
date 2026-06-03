@@ -61,7 +61,7 @@ export default function EventDetailPage() {
   const [guestbookMessages, setGuestbookMessages] = useState<GuestbookMessage[]>([]);
   const [guests, setGuests] = useState<Array<{ _id: string; name: string; photo_count: number }>>([]);
   const [guestFilter, setGuestFilter] = useState('');
-  const [soundReady, setSoundReady] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   function sortGuestbookMessages(messages: GuestbookMessage[]) {
     return [...messages].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -89,9 +89,8 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     const unlock = () => {
-      unlockGuestbookAudio()
-        .then(setSoundReady)
-        .catch(() => setSoundReady(false));
+      if (!soundEnabled) return;
+      unlockGuestbookAudio().catch(() => {});
     };
 
     window.addEventListener('pointerdown', unlock, { once: true });
@@ -101,12 +100,18 @@ export default function EventDetailPage() {
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown', unlock);
     };
-  }, []);
+  }, [soundEnabled]);
 
-  async function enableGuestbookSound() {
+  async function toggleGuestbookSound() {
+    if (soundEnabled) {
+      setSoundEnabled(false);
+      toast.info('Guestbook sound off');
+      return;
+    }
+
     const ready = await unlockGuestbookAudio();
-    setSoundReady(ready);
-    toast[ready ? 'success' : 'error'](ready ? 'Guestbook sound enabled' : 'Sound could not be enabled');
+    setSoundEnabled(ready);
+    toast[ready ? 'success' : 'error'](ready ? 'Guestbook sound on' : 'Sound could not be enabled');
   }
 
   useEffect(() => {
@@ -122,14 +127,14 @@ export default function EventDetailPage() {
         if (current.some((item) => item._id === message._id)) return current;
         return sortGuestbookMessages([message, ...current]);
       });
-      playGuestbookTing().catch(() => {});
+      if (soundEnabled) playGuestbookTing().catch(() => {});
       toast.info(`New guestbook message from ${message.guest_id?.name || 'Guest'}`);
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [event?.slug, guestFilter]);
+  }, [event?.slug, guestFilter, soundEnabled]);
 
   async function save(payload: EventRecord, coverImageFile?: File | null) {
     const token = getAdminToken();
@@ -236,8 +241,8 @@ export default function EventDetailPage() {
                 <div className="flex flex-wrap gap-2 text-sm font-black">
                   <span className="rounded-lg bg-moss px-3 py-2 text-cream">Unread {unreadMessages}</span>
                   <span className="rounded-lg bg-white/70 px-3 py-2 text-moss ring-1 ring-moss/10">Read {readMessages}</span>
-                  <Button variant="ghost" className="min-h-9 px-3 py-2 text-sm" onClick={enableGuestbookSound}>
-                    <Bell size={15} /> {soundReady ? 'Sound on' : 'Sound'}
+                  <Button variant="ghost" className="min-h-9 px-3 py-2 text-sm" onClick={toggleGuestbookSound}>
+                    <Bell size={15} /> {soundEnabled ? 'Sound on' : 'Sound off'}
                   </Button>
                 </div>
               </div>
