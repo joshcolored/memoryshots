@@ -165,9 +165,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     if (!video || !track) return;
 
     const rect = video.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width;
+    const visualX = (event.clientX - rect.left) / rect.width;
+    const x = facingMode === 'user' ? 1 - visualX : visualX;
     const y = (event.clientY - rect.top) / rect.height;
-    setFocusPoint({ x: x * 100, y: y * 100 });
+    setFocusPoint({ x: visualX * 100, y: y * 100 });
     window.setTimeout(() => setFocusPoint(null), 700);
 
     const capabilities = track.getCapabilities?.() as MediaTrackCapabilities & {
@@ -207,6 +208,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.filter = selectedFilter.css;
+    if (facingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('Capture failed'))), 'image/jpeg', 0.88);
@@ -245,7 +250,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
             muted
             onPointerDown={focusCamera}
             className="aspect-[3/4] w-full bg-ink object-cover"
-            style={{ filter: selectedFilter.css }}
+            style={{
+              filter: selectedFilter.css,
+              transform: facingMode === 'user' ? 'scaleX(-1)' : undefined
+            }}
           />
           {focusPoint && (
             <div
