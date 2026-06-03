@@ -23,6 +23,10 @@ export default function EventDetailPage() {
   const [guests, setGuests] = useState<Array<{ _id: string; name: string; photo_count: number }>>([]);
   const [guestFilter, setGuestFilter] = useState('');
 
+  function sortGuestbookMessages(messages: GuestbookMessage[]) {
+    return [...messages].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
   async function load() {
     const token = getAdminToken();
     if (!token) return router.push('/admin/login');
@@ -36,7 +40,7 @@ export default function EventDetailPage() {
     setStats(eventRes.stats);
     setPhotos(photoRes.data);
     setGuests(guestRes.data);
-    setGuestbookMessages(guestbookRes.data);
+    setGuestbookMessages(sortGuestbookMessages(guestbookRes.data));
   }
 
   useEffect(() => {
@@ -49,6 +53,13 @@ export default function EventDetailPage() {
     socket.emit('join-event', event.slug);
     socket.on('photo:new', () => {
       load().catch((error) => toast.error(error.message));
+    });
+    socket.on('guestbook:new', ({ message }: { message?: GuestbookMessage }) => {
+      if (!message) return;
+      setGuestbookMessages((current) => {
+        if (current.some((item) => item._id === message._id)) return current;
+        return sortGuestbookMessages([message, ...current]);
+      });
     });
 
     return () => {
@@ -165,7 +176,7 @@ export default function EventDetailPage() {
               </div>
 
               {guestbookMessages.length ? (
-                <div className="grid max-h-[30rem] gap-3 overflow-y-auto pr-1">
+                <div className="grid max-h-[18rem] gap-3 overflow-y-auto pr-1">
                   {guestbookMessages.map((item) => (
                     <article key={item._id} className="rounded-xl bg-white/70 p-4 ring-1 ring-moss/10">
                       <div className="mb-2 flex flex-wrap items-start justify-between gap-2 text-sm text-moss">

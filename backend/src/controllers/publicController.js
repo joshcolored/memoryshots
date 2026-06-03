@@ -153,6 +153,12 @@ export const createGuestbookMessage = asyncHandler(async (req, res) => {
     message: req.body.message
   });
 
+  await message.populate('guest_id', 'name');
+  req.app.get('io').to(`event:${req.event.slug}`).emit('guestbook:new', {
+    event: req.event.slug,
+    message
+  });
+
   res.status(201).json({ data: message, message: 'Message saved for review' });
 });
 
