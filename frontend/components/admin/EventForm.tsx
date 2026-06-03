@@ -57,6 +57,7 @@ export function EventForm({
   }
 
   const coverPreview = coverMode === 'upload' ? coverPreviewUrl : form.cover_image || '';
+  const isSavedEvent = Boolean(initial?._id || initial?.id);
 
   return (
     <form onSubmit={submit} className="grid gap-4 rounded-2xl bg-cream/80 p-5 shadow-soft">
@@ -111,17 +112,19 @@ export function EventForm({
         )}
       </div>
       <Field label="Event date" type="date" value={String(form.event_date).slice(0, 10)} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
-          <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Active
-        </label>
-        <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
-          <input type="checkbox" checked={Boolean(form.guestbook_enabled)} onChange={(e) => setForm({ ...form, guestbook_enabled: e.target.checked })} /> Guestbook
-        </label>
-        <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
-          <input type="checkbox" checked={Boolean(form.watermark_enabled)} onChange={(e) => setForm({ ...form, watermark_enabled: e.target.checked })} /> Watermark
-        </label>
-      </div>
+      {!isSavedEvent && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
+            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Active
+          </label>
+          <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
+            <input type="checkbox" checked={Boolean(form.guestbook_enabled)} onChange={(e) => setForm({ ...form, guestbook_enabled: e.target.checked })} /> Guestbook
+          </label>
+          <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
+            <input type="checkbox" checked={Boolean(form.watermark_enabled)} onChange={(e) => setForm({ ...form, watermark_enabled: e.target.checked })} /> Watermark
+          </label>
+        </div>
+      )}
       <Button disabled={busy}>{busy && <Spinner />} {busy ? 'Saving...' : submitLabel}</Button>
     </form>
   );
