@@ -138,14 +138,24 @@ select {
   position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 20;
+  z-index: 25;
   display: flex;
-  width: 28%;
+  width: 50%;
   align-items: center;
   border: 0;
   background: transparent;
   color: #fff8ec;
   cursor: pointer;
+}
+
+.stories-tap-zone-prev {
+  left: 0;
+  justify-content: flex-start;
+}
+
+.stories-tap-zone-next {
+  right: 0;
+  justify-content: flex-end;
 }
 
 .stories-nav-icon {

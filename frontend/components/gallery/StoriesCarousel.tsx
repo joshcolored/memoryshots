@@ -19,6 +19,8 @@ const STORY_DURATION_MS = 3000;
 
 export function StoriesCarousel({ photos, index, autoPlay = true, fullscreen = false, onIndexChange }: Props) {
   const carouselRef = useRef<BlossomCarouselHandle>(null);
+  const ignoreScrollSyncUntilRef = useRef(0);
+  const scrollSyncTimerRef = useRef<number | null>(null);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const safeIndex = photos.length ? Math.min(index, photos.length - 1) : 0;
 
@@ -27,7 +29,16 @@ export function StoriesCarousel({ photos, index, autoPlay = true, fullscreen = f
   useEffect(() => {
     const element = carouselRef.current?.element;
     const slide = element?.querySelector<HTMLElement>(`[data-story-slide="${safeIndex}"]`);
+    ignoreScrollSyncUntilRef.current = Date.now() + 650;
+    if (scrollSyncTimerRef.current) window.clearTimeout(scrollSyncTimerRef.current);
+    scrollSyncTimerRef.current = window.setTimeout(() => {
+      ignoreScrollSyncUntilRef.current = 0;
+    }, 650);
     slide?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+    return () => {
+      if (scrollSyncTimerRef.current) window.clearTimeout(scrollSyncTimerRef.current);
+    };
   }, [safeIndex]);
 
   function markLoaded(photoId: string) {
@@ -47,6 +58,7 @@ export function StoriesCarousel({ photos, index, autoPlay = true, fullscreen = f
   function syncActiveFromScroll() {
     const element = carouselRef.current?.element;
     if (!element) return;
+    if (Date.now() < ignoreScrollSyncUntilRef.current) return;
 
     const slides = Array.from(element.querySelectorAll<HTMLElement>('[data-story-slide]'));
     const center = element.scrollLeft + element.clientWidth / 2;
@@ -121,11 +133,11 @@ export function StoriesCarousel({ photos, index, autoPlay = true, fullscreen = f
         ))}
       </BlossomCarousel>
 
-      <button className="stories-tap-zone left-0" onClick={previousStory} aria-label="Previous story">
+      <button className="stories-tap-zone stories-tap-zone-prev" onClick={previousStory} aria-label="Previous story">
         <ChevronLeft className="stories-nav-icon" />
       </button>
-      <button className="stories-tap-zone right-0" onClick={nextStory} aria-label="Next story">
-        <ChevronRight className="stories-nav-icon ml-auto" />
+      <button className="stories-tap-zone stories-tap-zone-next" onClick={nextStory} aria-label="Next story">
+        <ChevronRight className="stories-nav-icon" />
       </button>
     </div>
   );
