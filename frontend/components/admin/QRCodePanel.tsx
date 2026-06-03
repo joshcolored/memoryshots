@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import QRCode from 'react-qr-code';
 import { Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { APP_URL } from '@/lib/api';
+import { API_URL, APP_URL } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 
 type QRCodePanelProps = {
@@ -97,6 +97,7 @@ function drawCoverImage(ctx: CanvasRenderingContext2D, image: HTMLImageElement, 
 export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', eventDate, coverImage = '' }: QRCodePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const link = `${APP_URL}/event/${slug}`;
+  const posterCoverImage = coverImage ? `${API_URL}/api/image-proxy?url=${encodeURIComponent(coverImage)}` : '';
 
   async function download() {
     const svg = ref.current?.querySelector('svg');
@@ -107,7 +108,7 @@ export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', 
     try {
       const [image, cover] = await Promise.all([
         loadCanvasImage(svgUrl),
-        coverImage ? loadCanvasImage(coverImage).catch(() => null) : Promise.resolve(null)
+        posterCoverImage ? loadCanvasImage(posterCoverImage).catch(() => null) : Promise.resolve(null)
       ]);
       const canvas = document.createElement('canvas');
       canvas.width = 1800;
@@ -195,9 +196,6 @@ export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', 
 
   return (
     <div className="grid gap-4 rounded-2xl bg-cream/80 p-5 shadow-soft">
-      {coverImage && (
-        <img src={coverImage} alt={`${title} cover`} className="aspect-[16/9] w-full rounded-xl object-cover ring-1 ring-moss/10" />
-      )}
       <div ref={ref} className="mx-auto rounded-2xl bg-cream p-4">
         <QRCode value={link} size={220} bgColor="#FFF8EC" fgColor="#546B41" />
       </div>

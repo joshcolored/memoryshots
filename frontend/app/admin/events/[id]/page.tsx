@@ -140,7 +140,38 @@ export default function EventDetailPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <EventForm initial={event} submitLabel="Save event" onSubmit={save} />
-          <QRCodePanel slug={event.slug} title={event.title} eventType={event.event_type} eventDate={event.event_date} coverImage={event.cover_image} />
+          <div className="grid gap-6">
+            <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-black text-ink">Guestbook</h2>
+                  <p className="mt-1 text-sm text-moss">{guestbookMessages.length} messages</p>
+                </div>
+                <span className={`rounded-lg px-3 py-2 text-sm font-black ${event.guestbook_enabled ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'}`}>
+                  {event.guestbook_enabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+
+              {guestbookMessages.length ? (
+                <div className="grid max-h-96 gap-3 overflow-y-auto pr-1">
+                  {guestbookMessages.map((item) => (
+                    <article key={item._id} className="rounded-xl bg-white/70 p-4 ring-1 ring-moss/10">
+                      <div className="mb-2 grid gap-1 text-sm text-moss">
+                        <span className="font-black">{item.guest_id?.name || 'Guest'}</span>
+                        <span className="font-semibold">{new Date(item.created_at).toLocaleString()}</span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-ink">{item.message}</p>
+                      <p className="mt-3 text-xs font-black uppercase tracking-widest text-moss">{item.status}</p>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl bg-white/60 p-6 text-center font-semibold text-moss">No guestbook messages yet.</div>
+              )}
+            </div>
+
+            <QRCodePanel slug={event.slug} title={event.title} eventType={event.event_type} eventDate={event.event_date} coverImage={event.cover_image} />
+          </div>
         </div>
 
         <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
@@ -175,34 +206,6 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-black text-ink">Guestbook</h2>
-              <p className="mt-1 text-sm text-moss">{guestbookMessages.length} messages</p>
-            </div>
-            <span className={`rounded-lg px-3 py-2 text-sm font-black ${event.guestbook_enabled ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'}`}>
-              {event.guestbook_enabled ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-
-          {guestbookMessages.length ? (
-            <div className="grid gap-3">
-              {guestbookMessages.map((item) => (
-                <article key={item._id} className="rounded-xl bg-white/70 p-4 ring-1 ring-moss/10">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm text-moss">
-                    <span className="font-black">{item.guest_id?.name || 'Guest'}</span>
-                    <span className="font-semibold">{new Date(item.created_at).toLocaleString()}</span>
-                  </div>
-                  <p className="whitespace-pre-wrap text-ink">{item.message}</p>
-                  <p className="mt-3 text-xs font-black uppercase tracking-widest text-moss">{item.status}</p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl bg-white/60 p-6 text-center font-semibold text-moss">No guestbook messages yet.</div>
-          )}
-        </div>
       </section>
     </main>
   );

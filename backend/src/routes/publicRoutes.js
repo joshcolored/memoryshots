@@ -10,12 +10,14 @@ import {
   getPhotoImage,
   joinEvent,
   listPublicGallery,
+  proxyImage,
   uploadGuestPhoto
 } from '../controllers/publicController.js';
 
 const router = express.Router();
 
 router.get('/photos/:id/image', param('id').isMongoId(), validate, getPhotoImage);
+router.get('/image-proxy', query('url').isURL({ protocols: ['http', 'https'], require_protocol: true }), validate, proxyImage);
 router.get('/events/:slug', param('slug').isSlug(), validate, getEventBySlug);
 router.post('/events/:slug/join', param('slug').isSlug(), body('name').trim().isLength({ min: 1, max: 80 }), validate, joinEvent);
 router.get('/events/:slug/session', param('slug').isSlug(), validate, requireGuest, getGuestSession);

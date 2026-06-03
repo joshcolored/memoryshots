@@ -108,7 +108,7 @@ export function EventForm({
         )}
 
         {coverPreview && (
-          <img src={coverPreview} alt="Cover preview" className="aspect-[16/9] w-full rounded-lg object-cover ring-1 ring-moss/10" />
+          <img src={coverPreview} alt="Cover preview" className="h-28 w-full max-w-56 rounded-lg object-cover ring-1 ring-moss/10" />
         )}
       </div>
       <Field label="Event date" type="date" value={String(form.event_date).slice(0, 10)} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required />

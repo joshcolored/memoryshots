@@ -172,3 +172,31 @@ export const getPhotoImage = asyncHandler(async (req, res) => {
 
   await streamPhotoById(req.params.id, res);
 });
+
+export const proxyImage = asyncHandler(async (req, res) => {
+  const targetUrl = new URL(req.query.url);
+  if (!['http:', 'https:'].includes(targetUrl.protocol)) {
+    const error = new Error('Unsupported image URL');
+    error.status = 400;
+    throw error;
+  }
+
+  const response = await fetch(targetUrl);
+  const contentType = response.headers.get('content-type') || '';
+  if (!response.ok || !contentType.startsWith('image/')) {
+    const error = new Error('Image could not be loaded');
+    error.status = 422;
+    throw error;
+  }
+
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.byteLength > 8 * 1024 * 1024) {
+    const error = new Error('Image is too large');
+    error.status = 413;
+    throw error;
+  }
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(bytes);
+});
