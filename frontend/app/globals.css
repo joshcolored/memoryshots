@@ -87,8 +87,8 @@ select {
 .stories-carousel {
   height: min(68vh, 560px);
   min-height: 360px;
-  padding-inline: max(1rem, calc((100% - min(78vw, 430px)) / 2));
-  scroll-padding-inline: max(1rem, calc((100% - min(78vw, 430px)) / 2));
+  padding-inline: 0;
+  scroll-padding-inline: 0;
   scroll-snap-type: x mandatory;
   transform-style: preserve-3d;
 }
@@ -99,9 +99,9 @@ select {
 }
 
 .stories-slide {
-  width: min(78vw, 430px);
+  width: 100%;
   height: 100%;
-  padding: 1rem 0.5rem;
+  padding: 0;
   scroll-snap-align: center;
   transition:
     opacity 420ms ease,
@@ -111,12 +111,12 @@ select {
 }
 
 .stories-slide.is-before {
-  transform: translateX(-1.5rem) translateZ(-160px) rotateY(24deg) scale(0.86);
+  transform: translateX(-0.75rem) translateZ(-120px) rotateY(16deg) scale(0.94);
   transform-origin: right center;
 }
 
 .stories-slide.is-after {
-  transform: translateX(1.5rem) translateZ(-160px) rotateY(-24deg) scale(0.86);
+  transform: translateX(0.75rem) translateZ(-120px) rotateY(-16deg) scale(0.94);
   transform-origin: left center;
 }
 
@@ -128,6 +128,7 @@ select {
 .stories-card {
   position: relative;
   height: 100%;
+  width: 100%;
   overflow: hidden;
   border-radius: 8px;
   background: #050505;
@@ -184,13 +185,10 @@ select {
   .stories-carousel {
     height: 68vh;
     min-height: 420px;
-    padding-inline: 1rem;
-    scroll-padding-inline: 1rem;
   }
 
   .stories-slide {
-    width: calc(100vw - 2rem);
-    padding-inline: 0;
+    width: 100%;
   }
 
   .stories-tap-zone {

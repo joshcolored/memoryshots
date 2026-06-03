@@ -121,7 +121,7 @@ export function StoriesCarousel({ photos, index, autoPlay = true, fullscreen = f
               <img
                 src={photo.image_url}
                 alt="Story photo"
-                className="relative z-10 h-full w-full object-contain"
+                className="relative z-10 h-full w-full object-cover"
                 onLoad={() => markLoaded(photo._id)}
               />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-4 text-cream">
