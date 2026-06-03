@@ -66,6 +66,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [sourceFilterId, setSourceFilterId] = useState<FilterId>('clean');
   const [preview, setPreview] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -107,7 +108,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
 
     let cancelled = false;
     setProcessing(true);
-    processImageFile(sourceFile, 'clean')
+    processImageFile(sourceFile, sourceFilterId)
       .then((filteredFile) => {
         if (cancelled) return;
         setPreview(filteredFile);
@@ -126,7 +127,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [sourceFile]);
+  }, [sourceFile, sourceFilterId]);
 
   async function openCamera(mode = facingMode) {
     setOpeningCamera(true);
@@ -207,7 +208,6 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     canvas.height = Math.round(video.videoHeight * ratio);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.filter = selectedFilter.css;
     if (facingMode === 'user') {
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
@@ -216,6 +216,7 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('Capture failed'))), 'image/jpeg', 0.88);
     });
+    setSourceFilterId(filterId);
     setSourceFile(new File([blob], `memoryshot-${Date.now()}.jpg`, { type: 'image/jpeg' }));
     closeCamera();
   }
@@ -322,7 +323,10 @@ export function CameraCapture({ disabled, onFileReady }: Props) {
         accept="image/jpeg,image/png,image/webp"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) setSourceFile(file);
+          if (file) {
+            setSourceFilterId('clean');
+            setSourceFile(file);
+          }
           event.target.value = '';
         }}
       />

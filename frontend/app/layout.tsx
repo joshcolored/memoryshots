@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
 import { RouteTransition } from '@/components/ui/RouteTransition';
+import '@blossom-carousel/core/style.css';
 import './globals.css';
 
 export const metadata: Metadata = {

@@ -10,6 +10,7 @@ import type { EventRecord, Photo } from '@/types';
 import { API_URL, publicApi, type PaginationMeta } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
+import { StoriesCarousel } from '@/components/gallery/StoriesCarousel';
 import { Spinner } from '@/components/ui/Spinner';
 
 const GALLERY_LIMIT = 10;
@@ -23,7 +24,6 @@ export default function GalleryPage() {
   const [index, setIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
   const [tvLoading, setTvLoading] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [galleryPage, setGalleryPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const pageRef = useRef(1);
@@ -82,10 +82,6 @@ export default function GalleryPage() {
     load(page).catch((error) => toast.error(error.message));
   }
 
-  function markLoaded(photoId: string) {
-    setLoadedImages((current) => ({ ...current, [photoId]: true }));
-  }
-
   function openTvMode() {
     setTvLoading(true);
     setAutoPlay(true);
@@ -118,63 +114,23 @@ export default function GalleryPage() {
             </div>
           </header>
 
-          <div className="relative overflow-hidden rounded-[2rem] bg-zinc-950 shadow-[0_0_0_10px_rgba(255,248,236,0.08),0_40px_120px_rgba(0,0,0,0.7)] ring-1 ring-cream/10">
-            <div
-              className="flex h-[66vh] min-h-[430px] transition-transform duration-700 ease-out sm:h-[72vh]"
-              style={{ transform: `translateX(-${index * 100}%)` }}
-            >
-              {photos.map((slide) => (
-                <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
-                  {!loadedImages[slide._id] && (
-                    <div className="absolute inset-0 z-20 grid place-items-center bg-black/35 text-cream">
-                      <Spinner className="size-8" />
-                    </div>
-                  )}
-                  <img
-                    src={slide.image_url}
-                    alt="Carousel backdrop"
-                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-3xl"
-                    onLoad={() => markLoaded(slide._id)}
-                  />
-                  <img
-                    src={slide.image_url}
-                    alt="TV carousel photo"
-                    className="relative z-10 max-h-full max-w-full object-contain"
-                    onLoad={() => markLoaded(slide._id)}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
+          <div className="relative rounded-[2rem] bg-zinc-950 shadow-[0_0_0_10px_rgba(255,248,236,0.08),0_40px_120px_rgba(0,0,0,0.7)] ring-1 ring-cream/10">
+            <StoriesCarousel photos={photos} index={index} autoPlay={autoPlay} fullscreen onIndexChange={setIndex} />
             <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-black/55 p-4 backdrop-blur">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Carousel - Now showing</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-parchment">TV Stories - Now showing</p>
                 <h2 className="text-xl font-black">{photo.guest_id?.name || 'Guest'}</h2>
                 <p className="text-sm text-parchment">{new Date(photo.created_at).toLocaleString()}</p>
               </div>
               <p className="font-mono text-sm text-parchment">{index + 1} / {photos.length}</p>
             </div>
-            <button
-              className="absolute left-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft sm:size-14"
-              onClick={previousPhoto}
-              aria-label="Previous photo"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              className="absolute right-4 top-1/2 z-20 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-cream/90 text-moss shadow-soft sm:size-14"
-              onClick={nextPhoto}
-              aria-label="Next photo"
-            >
-              <ChevronRight />
-            </button>
           </div>
 
           <section className="rounded-3xl bg-cream/10 p-3 ring-1 ring-cream/15 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-widest text-parchment">Up Next Queue</h2>
-                <p className="mt-1 text-xs text-parchment">Tap a memory to jump it onto the carousel.</p>
+                <p className="mt-1 text-xs text-parchment">Tap a memory to jump it into the stories carousel.</p>
               </div>
               <Button variant="ghost" onClick={nextPhoto}><ChevronRight size={16} /> Next</Button>
             </div>
@@ -228,7 +184,7 @@ export default function GalleryPage() {
           <section className="mb-8 -mx-2 rounded-3xl bg-cream/80 p-2 shadow-soft sm:mx-0 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-moss">Live Carousel</p>
+                <p className="text-xs font-black uppercase tracking-widest text-moss">Live Stories</p>
                 <h2 className="text-xl font-black text-ink sm:text-2xl">Now showing memories</h2>
               </div>
               <div className="flex gap-2">
@@ -237,32 +193,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl bg-ink">
-              <div
-                className="flex h-[62vh] max-h-[520px] min-h-[360px] transition-transform duration-700 ease-out sm:h-[420px]"
-                style={{ transform: `translateX(-${index * 100}%)` }}
-              >
-                {photos.map((slide) => (
-                  <div key={slide._id} className="relative grid min-w-full place-items-center overflow-hidden">
-                    {!loadedImages[slide._id] && (
-                      <div className="absolute inset-0 z-20 grid place-items-center bg-ink/60 text-cream">
-                        <Spinner className="size-8" />
-                      </div>
-                    )}
-                    <img src={slide.image_url} alt="Carousel backdrop" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-25 blur-2xl" onLoad={() => markLoaded(slide._id)} />
-                    <img src={slide.image_url} alt="Carousel photo" className="relative z-10 max-h-full max-w-full object-contain" onLoad={() => markLoaded(slide._id)} />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute bottom-2 left-2 right-2 flex flex-wrap items-end justify-between gap-2 rounded-xl bg-black/50 p-3 text-cream backdrop-blur sm:bottom-3 sm:left-3 sm:right-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-parchment">Carousel - Now showing</p>
-                  <p className="text-base font-black sm:text-lg">{photos[index]?.guest_id?.name || 'Guest'}</p>
-                  <p className="text-xs text-parchment">{photos[index] ? new Date(photos[index].created_at).toLocaleString() : ''}</p>
-                </div>
-                <span className="font-mono text-xs text-parchment">{index + 1} / {photos.length}</span>
-              </div>
-            </div>
+            <StoriesCarousel photos={photos} index={index} autoPlay={false} onIndexChange={setIndex} />
 
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:grid sm:max-h-60 sm:grid-cols-2 sm:overflow-y-auto lg:grid-cols-3">
               {photos.map((photo, photoIndex) => (

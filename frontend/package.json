@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@blossom-carousel/react": "^1.1.1",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.469.0",
     "next": "latest",
