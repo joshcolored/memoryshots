@@ -11,6 +11,7 @@ import {
   listGuestbookMessages,
   listGuests,
   listPhotos,
+  markGuestbookMessageRead,
   updateEvent,
   updatePhotoStatus
 } from '../controllers/adminController.js';
@@ -54,6 +55,7 @@ router.get('/events/:id/guestbook', param('id').isMongoId(), validate, listGuest
 router.get('/events/:id/photos', param('id').isMongoId(), validate, listPhotos);
 router.get('/events/:id/photos.zip', param('id').isMongoId(), validate, downloadEventZip);
 
+router.patch('/guestbook/:id/read', param('id').isMongoId(), validate, markGuestbookMessageRead);
 router.patch('/photos/:id/status', param('id').isMongoId(), body('status').isIn(['pending', 'approved', 'hidden']), validate, updatePhotoStatus);
 router.delete('/photos/:id', param('id').isMongoId(), validate, deletePhoto);
 

@@ -78,6 +78,8 @@ export const adminApi = {
   guests: (token: string, id: string) => request<{ data: Array<{ _id: string; name: string; photo_count: number }> }>(`/api/admin/events/${id}/guests`, { token }),
   guestbookMessages: (token: string, id: string) =>
     request<{ data: GuestbookMessage[] }>(`/api/admin/events/${id}/guestbook`, { token }),
+  markGuestbookRead: (token: string, id: string) =>
+    request<{ data: GuestbookMessage }>(`/api/admin/guestbook/${id}/read`, { method: 'PATCH', token }),
   photos: (token: string, id: string, guestId?: string) =>
     request<{ data: Photo[] }>(`/api/admin/events/${id}/photos${guestId ? `?guest_id=${guestId}` : ''}`, { token }),
   setPhotoStatus: (token: string, id: string, status: Photo['status']) =>

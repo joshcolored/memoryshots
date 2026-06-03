@@ -170,6 +170,25 @@ export const listGuestbookMessages = asyncHandler(async (req, res) => {
   res.json({ data: messages });
 });
 
+export const markGuestbookMessageRead = asyncHandler(async (req, res) => {
+  const message = await GuestbookMessage.findById(req.params.id);
+  if (!message) {
+    const error = new Error('Guestbook message not found');
+    error.status = 404;
+    throw error;
+  }
+
+  await findAdminEvent(req, message.event_id);
+
+  if (!message.read_at) {
+    message.read_at = new Date();
+    await message.save();
+  }
+
+  await message.populate('guest_id', 'name');
+  res.json({ data: message });
+});
+
 export const updatePhotoStatus = asyncHandler(async (req, res) => {
   const existingPhoto = await findAdminPhoto(req, req.params.id);
   const event = await Event.findById(existingPhoto.event_id);

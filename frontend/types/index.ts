@@ -38,5 +38,6 @@ export type GuestbookMessage = {
   message: string;
   status: 'pending' | 'approved' | 'hidden';
   created_at: string;
+  read_at?: string | null;
   guest_id?: Guest;
 };

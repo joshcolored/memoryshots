@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Download, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Download, ExternalLink, MailOpen, Trash2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import type { EventRecord, GuestbookMessage, Photo } from '@/types';
@@ -95,7 +95,18 @@ export default function EventDetailPage() {
     toast.success('Photo deleted');
   }
 
+  async function markGuestbookRead(messageId: string) {
+    const token = getAdminToken();
+    if (!token) return;
+    const response = await adminApi.markGuestbookRead(token, messageId);
+    setGuestbookMessages((current) => current.map((item) => (item._id === messageId ? response.data : item)));
+    toast.success('Message marked as read');
+  }
+
   if (!event) return <main className="min-h-screen px-5 py-8 text-moss">Loading event...</main>;
+
+  const unreadMessages = guestbookMessages.filter((item) => !item.read_at).length;
+  const readMessages = guestbookMessages.length - unreadMessages;
 
   return (
     <main className="min-h-screen px-5 py-8">
@@ -147,21 +158,36 @@ export default function EventDetailPage() {
                   <h2 className="text-2xl font-black text-ink">Guestbook</h2>
                   <p className="mt-1 text-sm text-moss">{guestbookMessages.length} messages</p>
                 </div>
-                <span className={`rounded-lg px-3 py-2 text-sm font-black ${event.guestbook_enabled ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'}`}>
-                  {event.guestbook_enabled ? 'Enabled' : 'Disabled'}
-                </span>
+                <div className="flex flex-wrap gap-2 text-sm font-black">
+                  <span className="rounded-lg bg-moss px-3 py-2 text-cream">Unread {unreadMessages}</span>
+                  <span className="rounded-lg bg-white/70 px-3 py-2 text-moss ring-1 ring-moss/10">Read {readMessages}</span>
+                </div>
               </div>
 
               {guestbookMessages.length ? (
-                <div className="grid max-h-96 gap-3 overflow-y-auto pr-1">
+                <div className="grid max-h-[30rem] gap-3 overflow-y-auto pr-1">
                   {guestbookMessages.map((item) => (
                     <article key={item._id} className="rounded-xl bg-white/70 p-4 ring-1 ring-moss/10">
-                      <div className="mb-2 grid gap-1 text-sm text-moss">
-                        <span className="font-black">{item.guest_id?.name || 'Guest'}</span>
-                        <span className="font-semibold">{new Date(item.created_at).toLocaleString()}</span>
+                      <div className="mb-2 flex flex-wrap items-start justify-between gap-2 text-sm text-moss">
+                        <div className="grid gap-1">
+                          <span className="font-black">{item.guest_id?.name || 'Guest'}</span>
+                          <span className="font-semibold">{new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                        <span className={`rounded-lg px-2.5 py-1 text-xs font-black uppercase tracking-widest ${item.read_at ? 'bg-white text-moss ring-1 ring-moss/10' : 'bg-moss text-cream'}`}>
+                          {item.read_at ? 'Read' : 'Unread'}
+                        </span>
                       </div>
                       <p className="whitespace-pre-wrap text-ink">{item.message}</p>
-                      <p className="mt-3 text-xs font-black uppercase tracking-widest text-moss">{item.status}</p>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-black uppercase tracking-widest text-moss">{item.status}</p>
+                        {item.read_at ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-black text-moss"><Check size={14} /> Read</span>
+                        ) : (
+                          <Button variant="ghost" className="min-h-9 px-3 py-2 text-sm" onClick={() => markGuestbookRead(item._id)}>
+                            <MailOpen size={15} /> Mark read
+                          </Button>
+                        )}
+                      </div>
                     </article>
                   ))}
                 </div>

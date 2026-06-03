@@ -5,7 +5,8 @@ const guestbookMessageSchema = new mongoose.Schema(
     event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true, index: true },
     guest_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Guest', required: true, index: true },
     message: { type: String, required: true, trim: true, maxlength: 500 },
-    status: { type: String, enum: ['pending', 'approved', 'hidden'], default: 'pending' }
+    status: { type: String, enum: ['pending', 'approved', 'hidden'], default: 'pending' },
+    read_at: { type: Date, default: null, index: true }
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
