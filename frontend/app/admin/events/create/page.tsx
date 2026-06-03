@@ -10,10 +10,10 @@ import { EventForm } from '@/components/admin/EventForm';
 export default function CreateEventPage() {
   const router = useRouter();
 
-  async function create(payload: EventRecord) {
+  async function create(payload: EventRecord, coverImageFile?: File | null) {
     const token = getAdminToken();
     if (!token) return router.push('/admin/login');
-    const response = await adminApi.createEvent(token, payload).catch((error) => {
+    const response = await adminApi.createEvent(token, payload, { coverImageFile }).catch((error) => {
       toast.error(error.message);
       throw error;
     });

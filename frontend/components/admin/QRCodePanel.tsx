@@ -12,6 +12,7 @@ type QRCodePanelProps = {
   title?: string;
   eventType?: string;
   eventDate?: string;
+  coverImage?: string;
 };
 
 function drawWrappedText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
@@ -74,7 +75,26 @@ function drawLeaf(ctx: CanvasRenderingContext2D, x: number, y: number, rotate: n
   ctx.restore();
 }
 
-export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', eventDate }: QRCodePanelProps) {
+function loadCanvasImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Unable to load image'));
+    image.src = src;
+  });
+}
+
+function drawCoverImage(ctx: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number) {
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  const x = (width - drawWidth) / 2;
+  const y = (height - drawHeight) / 2;
+  ctx.drawImage(image, x, y, drawWidth, drawHeight);
+}
+
+export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', eventDate, coverImage = '' }: QRCodePanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const link = `${APP_URL}/event/${slug}`;
 
@@ -82,22 +102,34 @@ export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', 
     const svg = ref.current?.querySelector('svg');
     if (!svg) return;
     const svgData = new XMLSerializer().serializeToString(svg);
-    const image = new Image();
-    image.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
-    image.onload = () => {
+    const svgUrl = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml' }));
+
+    try {
+      const [image, cover] = await Promise.all([
+        loadCanvasImage(svgUrl),
+        coverImage ? loadCanvasImage(coverImage).catch(() => null) : Promise.resolve(null)
+      ]);
       const canvas = document.createElement('canvas');
       canvas.width = 1800;
       canvas.height = 2400;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      ctx.fillStyle = '#FFF8EC';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (cover) {
+        drawCoverImage(ctx, cover, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(34, 40, 29, 0.52)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(255, 248, 236, 0.72)';
+        ctx.fillRect(90, 90, canvas.width - 180, canvas.height - 180);
+      } else {
+        ctx.fillStyle = '#FFF8EC';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
 
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(153, 173, 122, 0.24)');
-      gradient.addColorStop(0.5, 'rgba(220, 204, 172, 0.22)');
-      gradient.addColorStop(1, 'rgba(84, 107, 65, 0.14)');
+      gradient.addColorStop(0, cover ? 'rgba(153, 173, 122, 0.18)' : 'rgba(153, 173, 122, 0.24)');
+      gradient.addColorStop(0.5, cover ? 'rgba(255, 248, 236, 0.28)' : 'rgba(220, 204, 172, 0.22)');
+      gradient.addColorStop(1, cover ? 'rgba(84, 107, 65, 0.18)' : 'rgba(84, 107, 65, 0.14)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -154,11 +186,18 @@ export function QRCodePanel({ slug, title = 'MemoryShots', eventType = 'Event', 
       a.download = `${slug}-qr-poster.png`;
       a.href = canvas.toDataURL('image/png');
       a.click();
-    };
+    } catch {
+      toast.error('Unable to generate poster');
+    } finally {
+      URL.revokeObjectURL(svgUrl);
+    }
   }
 
   return (
     <div className="grid gap-4 rounded-2xl bg-cream/80 p-5 shadow-soft">
+      {coverImage && (
+        <img src={coverImage} alt={`${title} cover`} className="aspect-[16/9] w-full rounded-xl object-cover ring-1 ring-moss/10" />
+      )}
       <div ref={ref} className="mx-auto rounded-2xl bg-cream p-4">
         <QRCode value={link} size={220} bgColor="#FFF8EC" fgColor="#546B41" />
       </div>

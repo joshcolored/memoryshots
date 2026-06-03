@@ -1,10 +1,11 @@
-import type { EventRecord, Photo } from '@/types';
+import type { EventRecord, GuestbookMessage, Photo } from '@/types';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 type RequestOptions = RequestInit & { token?: string | null };
 type GalleryOptions = { page?: number; limit?: number };
+type EventCoverOptions = { coverImageFile?: File | null };
 export type PaginationMeta = { page: number; limit: number; total: number; total_pages: number };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -16,6 +17,18 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || 'Request failed');
   return data as T;
+}
+
+function eventRequestBody(payload: EventRecord, options: EventCoverOptions = {}) {
+  if (!options.coverImageFile) return JSON.stringify(payload);
+
+  const form = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    form.append(key, String(value));
+  });
+  form.append('cover_image_file', options.coverImageFile);
+  return form;
 }
 
 export const publicApi = {
@@ -57,12 +70,14 @@ export const adminApi = {
   login: (email: string, password: string) =>
     request<{ token: string; admin: { id?: string; name?: string; email: string } }>('/api/admin/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   events: (token: string) => request<{ data: EventRecord[] }>('/api/admin/events', { token }),
-  createEvent: (token: string, payload: EventRecord) =>
-    request<{ data: EventRecord }>('/api/admin/events', { method: 'POST', body: JSON.stringify(payload), token }),
-  updateEvent: (token: string, id: string, payload: EventRecord) =>
-    request<{ data: EventRecord }>(`/api/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
+  createEvent: (token: string, payload: EventRecord, options?: EventCoverOptions) =>
+    request<{ data: EventRecord }>('/api/admin/events', { method: 'POST', body: eventRequestBody(payload, options), token }),
+  updateEvent: (token: string, id: string, payload: EventRecord, options?: EventCoverOptions) =>
+    request<{ data: EventRecord }>(`/api/admin/events/${id}`, { method: 'PUT', body: eventRequestBody(payload, options), token }),
   event: (token: string, id: string) => request<{ data: EventRecord; stats: Record<string, number> }>(`/api/admin/events/${id}`, { token }),
   guests: (token: string, id: string) => request<{ data: Array<{ _id: string; name: string; photo_count: number }> }>(`/api/admin/events/${id}/guests`, { token }),
+  guestbookMessages: (token: string, id: string) =>
+    request<{ data: GuestbookMessage[] }>(`/api/admin/events/${id}/guestbook`, { token }),
   photos: (token: string, id: string, guestId?: string) =>
     request<{ data: Photo[] }>(`/api/admin/events/${id}/photos${guestId ? `?guest_id=${guestId}` : ''}`, { token }),
   setPhotoStatus: (token: string, id: string, status: Photo['status']) =>

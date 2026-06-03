@@ -45,6 +45,39 @@ export async function storePhoto({ file, event, guest }) {
   });
 }
 
+export async function storeCoverImage({ file, event }) {
+  const ext = extensionByType[file.mimetype] || path.extname(file.originalname || '') || '.jpg';
+  const filename = `${Date.now()}-${crypto.randomUUID()}`;
+  const publicId = `events/${event.slug}/cover/${filename}`;
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        public_id: publicId,
+        resource_type: 'image',
+        overwrite: false,
+        use_filename: false,
+        unique_filename: false,
+        folder: undefined,
+        context: {
+          event_id: String(event._id),
+          original_filename: file.originalname || ''
+        }
+      },
+      (error, result) => {
+        if (error || !result) return reject(error || new Error('Cloudinary upload failed'));
+        resolve({
+          fileId: result.public_id,
+          storagePath: `${publicId}${ext}`,
+          imageUrl: result.secure_url
+        });
+      }
+    );
+
+    uploadStream.end(file.buffer);
+  });
+}
+
 export async function streamPhotoById(fileId, res) {
   const bucket = getGridBucket();
   const _id = new ObjectId(fileId);

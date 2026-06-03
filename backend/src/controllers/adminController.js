@@ -7,7 +7,14 @@ import Photo from '../models/Photo.js';
 import GuestbookMessage from '../models/GuestbookMessage.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { slugify } from '../utils/slugify.js';
-import { deleteStoredPhoto, getGridFsDownloadStream, isGridFsPhoto } from '../services/storageService.js';
+import { deleteStoredPhoto, getGridFsDownloadStream, isGridFsPhoto, storeCoverImage } from '../services/storageService.js';
+
+function asBoolean(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return fallback;
+}
 
 function eventPayload(body) {
   return {
@@ -16,9 +23,9 @@ function eventPayload(body) {
     photo_limit: Math.min(Number(body.photo_limit || 16), 16),
     cover_image: body.cover_image || '',
     event_date: body.event_date,
-    is_active: Boolean(body.is_active),
-    watermark_enabled: Boolean(body.watermark_enabled),
-    guestbook_enabled: body.guestbook_enabled !== false
+    is_active: asBoolean(body.is_active),
+    watermark_enabled: asBoolean(body.watermark_enabled),
+    guestbook_enabled: asBoolean(body.guestbook_enabled, true)
   };
 }
 
@@ -86,6 +93,13 @@ export const createEvent = asyncHandler(async (req, res) => {
     slug: await generateUniqueEventSlug(req.body.title),
     admin_id: req.admin.admin_id || null
   });
+
+  if (req.file) {
+    const stored = await storeCoverImage({ file: req.file, event });
+    event.cover_image = stored.imageUrl;
+    await event.save();
+  }
+
   res.status(201).json({ data: event });
 });
 
@@ -103,15 +117,13 @@ export const getEvent = asyncHandler(async (req, res) => {
 });
 
 export const updateEvent = asyncHandler(async (req, res) => {
-  const event = await Event.findOneAndUpdate({ _id: req.params.id, ...adminEventScope(req) }, eventPayload(req.body), {
-    new: true,
-    runValidators: true
-  });
-  if (!event) {
-    const error = new Error('Event not found');
-    error.status = 404;
-    throw error;
+  const event = await findAdminEvent(req, req.params.id);
+  event.set(eventPayload(req.body));
+  if (req.file) {
+    const stored = await storeCoverImage({ file: req.file, event });
+    event.cover_image = stored.imageUrl;
   }
+  await event.save();
   res.json({ data: event });
 });
 
@@ -146,6 +158,16 @@ export const listPhotos = asyncHandler(async (req, res) => {
     .populate('guest_id', 'name photo_count')
     .lean();
   res.json({ data: photos });
+});
+
+export const listGuestbookMessages = asyncHandler(async (req, res) => {
+  await findAdminEvent(req, req.params.id);
+  const messages = await GuestbookMessage.find({ event_id: req.params.id })
+    .sort({ created_at: -1 })
+    .populate('guest_id', 'name')
+    .lean();
+
+  res.json({ data: messages });
 });
 
 export const updatePhotoStatus = asyncHandler(async (req, res) => {

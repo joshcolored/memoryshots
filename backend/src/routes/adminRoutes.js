@@ -8,12 +8,14 @@ import {
   downloadEventZip,
   getEvent,
   listEvents,
+  listGuestbookMessages,
   listGuests,
   listPhotos,
   updateEvent,
   updatePhotoStatus
 } from '../controllers/adminController.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { handleCoverImageMulter } from '../middleware/upload.js';
 import { validate } from '../middleware/validate.js';
 
 const router = express.Router();
@@ -43,11 +45,12 @@ router.post('/logout', requireAdmin, logout);
 router.use(requireAdmin);
 
 router.get('/events', listEvents);
-router.post('/events', eventValidation, validate, createEvent);
+router.post('/events', handleCoverImageMulter, eventValidation, validate, createEvent);
 router.get('/events/:id', param('id').isMongoId(), validate, getEvent);
-router.put('/events/:id', param('id').isMongoId(), eventValidation, validate, updateEvent);
+router.put('/events/:id', param('id').isMongoId(), handleCoverImageMulter, eventValidation, validate, updateEvent);
 router.delete('/events/:id', param('id').isMongoId(), validate, deleteEvent);
 router.get('/events/:id/guests', param('id').isMongoId(), validate, listGuests);
+router.get('/events/:id/guestbook', param('id').isMongoId(), validate, listGuestbookMessages);
 router.get('/events/:id/photos', param('id').isMongoId(), validate, listPhotos);
 router.get('/events/:id/photos.zip', param('id').isMongoId(), validate, downloadEventZip);
 

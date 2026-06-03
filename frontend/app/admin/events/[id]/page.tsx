@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Download, ExternalLink, Trash2 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
-import type { EventRecord, Photo } from '@/types';
+import type { EventRecord, GuestbookMessage, Photo } from '@/types';
 import { adminApi, API_URL, APP_URL } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
@@ -19,21 +19,24 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventRecord | null>(null);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [guestbookMessages, setGuestbookMessages] = useState<GuestbookMessage[]>([]);
   const [guests, setGuests] = useState<Array<{ _id: string; name: string; photo_count: number }>>([]);
   const [guestFilter, setGuestFilter] = useState('');
 
   async function load() {
     const token = getAdminToken();
     if (!token) return router.push('/admin/login');
-    const [eventRes, photoRes, guestRes] = await Promise.all([
+    const [eventRes, photoRes, guestRes, guestbookRes] = await Promise.all([
       adminApi.event(token, id),
       adminApi.photos(token, id, guestFilter || undefined),
-      adminApi.guests(token, id)
+      adminApi.guests(token, id),
+      adminApi.guestbookMessages(token, id)
     ]);
     setEvent(eventRes.data);
     setStats(eventRes.stats);
     setPhotos(photoRes.data);
     setGuests(guestRes.data);
+    setGuestbookMessages(guestbookRes.data);
   }
 
   useEffect(() => {
@@ -53,10 +56,10 @@ export default function EventDetailPage() {
     };
   }, [event?.slug, guestFilter]);
 
-  async function save(payload: EventRecord) {
+  async function save(payload: EventRecord, coverImageFile?: File | null) {
     const token = getAdminToken();
     if (!token) return;
-    const response = await adminApi.updateEvent(token, id, payload);
+    const response = await adminApi.updateEvent(token, id, payload, { coverImageFile });
     setEvent(response.data);
     toast.success('Event updated');
   }
@@ -137,7 +140,7 @@ export default function EventDetailPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <EventForm initial={event} submitLabel="Save event" onSubmit={save} />
-          <QRCodePanel slug={event.slug} title={event.title} eventType={event.event_type} eventDate={event.event_date} />
+          <QRCodePanel slug={event.slug} title={event.title} eventType={event.event_type} eventDate={event.event_date} coverImage={event.cover_image} />
         </div>
 
         <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
@@ -170,6 +173,35 @@ export default function EventDetailPage() {
               </article>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-2xl bg-cream/80 p-5 shadow-soft">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-black text-ink">Guestbook</h2>
+              <p className="mt-1 text-sm text-moss">{guestbookMessages.length} messages</p>
+            </div>
+            <span className={`rounded-lg px-3 py-2 text-sm font-black ${event.guestbook_enabled ? 'bg-moss text-cream' : 'bg-white/70 text-moss ring-1 ring-moss/10'}`}>
+              {event.guestbook_enabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+
+          {guestbookMessages.length ? (
+            <div className="grid gap-3">
+              {guestbookMessages.map((item) => (
+                <article key={item._id} className="rounded-xl bg-white/70 p-4 ring-1 ring-moss/10">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm text-moss">
+                    <span className="font-black">{item.guest_id?.name || 'Guest'}</span>
+                    <span className="font-semibold">{new Date(item.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="whitespace-pre-wrap text-ink">{item.message}</p>
+                  <p className="mt-3 text-xs font-black uppercase tracking-widest text-moss">{item.status}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl bg-white/60 p-6 text-center font-semibold text-moss">No guestbook messages yet.</div>
+          )}
         </div>
       </section>
     </main>

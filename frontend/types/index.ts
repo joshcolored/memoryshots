@@ -32,3 +32,11 @@ export type Photo = {
   created_at: string;
   guest_id?: Guest;
 };
+
+export type GuestbookMessage = {
+  _id: string;
+  message: string;
+  status: 'pending' | 'approved' | 'hidden';
+  created_at: string;
+  guest_id?: Guest;
+};

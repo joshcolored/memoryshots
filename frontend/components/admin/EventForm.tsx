@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EventRecord, EventType } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Field, SelectField } from '@/components/ui/Field';
@@ -20,19 +20,43 @@ const emptyEvent: EventRecord = {
   watermark_enabled: false
 };
 
-export function EventForm({ initial, onSubmit, submitLabel }: { initial?: Partial<EventRecord>; onSubmit: (event: EventRecord) => Promise<void>; submitLabel: string }) {
+export function EventForm({
+  initial,
+  onSubmit,
+  submitLabel
+}: {
+  initial?: Partial<EventRecord>;
+  onSubmit: (event: EventRecord, coverImageFile?: File | null) => Promise<void>;
+  submitLabel: string;
+}) {
   const [form, setForm] = useState<EventRecord>({ ...emptyEvent, ...initial } as EventRecord);
+  const [coverMode, setCoverMode] = useState<'link' | 'upload'>('link');
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!coverImageFile) {
+      setCoverPreviewUrl('');
+      return;
+    }
+
+    const url = URL.createObjectURL(coverImageFile);
+    setCoverPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [coverImageFile]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     try {
-      await onSubmit(form);
+      await onSubmit(form, coverMode === 'upload' ? coverImageFile : null);
     } finally {
       setBusy(false);
     }
   }
+
+  const coverPreview = coverMode === 'upload' ? coverPreviewUrl : form.cover_image || '';
 
   return (
     <form onSubmit={submit} className="grid gap-4 rounded-2xl bg-cream/80 p-5 shadow-soft">
@@ -47,7 +71,45 @@ export function EventForm({ initial, onSubmit, submitLabel }: { initial?: Partia
         {eventTypes.map((type) => <option key={type}>{type}</option>)}
       </SelectField>
       <Field label="Photo limit per guest" type="number" min={1} max={16} value={form.photo_limit} onChange={(e) => setForm({ ...form, photo_limit: Number(e.target.value) })} required />
-      <Field label="Cover image URL" value={form.cover_image || ''} onChange={(e) => setForm({ ...form, cover_image: e.target.value })} placeholder="https://..." />
+      <div className="grid gap-3 rounded-xl bg-white/50 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-moss">Cover image</span>
+          <div className="grid grid-cols-2 rounded-lg bg-cream p-1 ring-1 ring-moss/15">
+            <button
+              type="button"
+              className={`rounded-md px-4 py-2 text-sm font-black transition ${coverMode === 'link' ? 'bg-moss text-cream' : 'text-moss'}`}
+              onClick={() => setCoverMode('link')}
+            >
+              Link
+            </button>
+            <button
+              type="button"
+              className={`rounded-md px-4 py-2 text-sm font-black transition ${coverMode === 'upload' ? 'bg-moss text-cream' : 'text-moss'}`}
+              onClick={() => setCoverMode('upload')}
+            >
+              Upload
+            </button>
+          </div>
+        </div>
+
+        {coverMode === 'link' ? (
+          <Field label="Cover image URL" value={form.cover_image || ''} onChange={(e) => setForm({ ...form, cover_image: e.target.value })} placeholder="https://..." />
+        ) : (
+          <label className="grid gap-2 text-sm font-semibold text-moss">
+            Cover image file
+            <input
+              className="min-h-12 rounded-lg border border-moss/20 bg-cream px-4 py-3 text-ink outline-none file:mr-4 file:rounded-md file:border-0 file:bg-moss file:px-3 file:py-2 file:text-sm file:font-bold file:text-cream focus:border-moss"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => setCoverImageFile(event.target.files?.[0] || null)}
+            />
+          </label>
+        )}
+
+        {coverPreview && (
+          <img src={coverPreview} alt="Cover preview" className="aspect-[16/9] w-full rounded-lg object-cover ring-1 ring-moss/10" />
+        )}
+      </div>
       <Field label="Event date" type="date" value={String(form.event_date).slice(0, 10)} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required />
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="flex items-center gap-2 rounded-lg bg-white/60 p-3 text-sm font-semibold text-moss">
