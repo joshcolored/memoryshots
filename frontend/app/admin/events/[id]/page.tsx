@@ -12,6 +12,30 @@ import { Button } from '@/components/ui/Button';
 import { EventForm } from '@/components/admin/EventForm';
 import { QRCodePanel } from '@/components/admin/QRCodePanel';
 
+function playGuestbookTing() {
+  const AudioContextConstructor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextConstructor) return;
+
+  const context = new AudioContextConstructor();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(880, context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(1320, context.currentTime + 0.08);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.35);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.36);
+  oscillator.onended = () => {
+    context.close().catch(() => {});
+  };
+}
+
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -60,6 +84,8 @@ export default function EventDetailPage() {
         if (current.some((item) => item._id === message._id)) return current;
         return sortGuestbookMessages([message, ...current]);
       });
+      playGuestbookTing();
+      toast.info(`New guestbook message from ${message.guest_id?.name || 'Guest'}`);
     });
 
     return () => {
